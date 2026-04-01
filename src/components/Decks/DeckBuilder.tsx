@@ -165,7 +165,7 @@ export default function DeckBuilder() {
       <div className="page-header">
         <Link to="/decks" className="back-link">← Decks</Link>
         <h2 className="page-title">{deck.name}</h2>
-        <button className="btn btn-primary" onClick={() => exportDeck(deck)}>Export XLSX</button>
+        <button className="btn btn-primary" onClick={() => void exportDeck(deck)}>Export XLSX</button>
       </div>
 
       <div className="deck-layout">

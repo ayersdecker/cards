@@ -27,7 +27,7 @@ export default function CollectionDetail() {
       <div className="page-header">
         <Link to="/collections" className="back-link">← Collections</Link>
         <h2 className="page-title">{col.name}</h2>
-        <button className="btn btn-primary" onClick={() => exportCollection(col)}>
+        <button className="btn btn-primary" onClick={() => void exportCollection(col)}>
           Export XLSX
         </button>
       </div>
