@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import type { ScryfallCard, CollectionCard, DeckCard } from '../../types';
-import { getCardImage, getStorageRec, mapColors } from '../../services/scryfall';
+import { getCardImage, mapColors } from '../../services/scryfall';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
+import { useStorageSettings } from '../../context/StorageSettingsContext';
+import { getStorageRec, getStorageTier } from '../../services/storageSettings';
 
 interface Props {
   card: ScryfallCard;
@@ -11,6 +13,7 @@ interface Props {
 
 export default function CardDetail({ card, onClose }: Props) {
   const { user } = useAuth();
+  const { settings } = useStorageSettings();
   const { collections, updateCollection } = useCollections(user?.uid ?? null);
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
   const [feedback, setFeedback] = useState('');
@@ -72,9 +75,10 @@ export default function CardDetail({ card, onClose }: Props) {
     setTimeout(() => setFeedback(''), 2000);
   };
 
-  const storageRec = getStorageRec(card.prices.usd);
+  const storageRec = getStorageRec(card.prices.usd, settings);
+  const storageTier = getStorageTier(card.prices.usd, settings);
   const storageClass =
-    storageRec === 'Case' ? 'accent-yellow' : storageRec === 'Binder' ? 'accent-cyan' : 'accent-magenta';
+    storageTier === 'high' ? 'accent-yellow' : storageTier === 'mid' ? 'accent-cyan' : 'accent-magenta';
 
   return (
     <div className="modal-overlay" onClick={onClose}>

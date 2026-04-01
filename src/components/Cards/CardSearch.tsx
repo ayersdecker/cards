@@ -78,7 +78,7 @@ export default function CardSearch() {
         <div className="bulk-import-head">
           <div>
             <h3>Bulk Card Search</h3>
-            <p className="muted">Paste one card per line. Supports `4 Lightning Bolt` and `Lightning Bolt x4`.</p>
+            <p className="muted">Paste one card per line. Supports `4 Lightning Bolt`, `Lightning Bolt x4`, and set-specific entries like `Lightning Bolt [M11]`.</p>
           </div>
           <button
             type="button"

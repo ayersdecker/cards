@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDecks } from '../../hooks/useFirestore';
-import { searchCards, getCardImage, getSimilarCards } from '../../services/scryfall';
+import { searchCards, getCardById, getCardImage, getSimilarCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
+import { useStorageSettings } from '../../context/StorageSettingsContext';
 
 const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
   W: { label: 'White', color: '#f9fafb' },
@@ -18,6 +19,7 @@ const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
 export default function DeckBuilder() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { settings } = useStorageSettings();
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
   const deck = decks.find((d) => d.id === id);
 
@@ -32,6 +34,9 @@ export default function DeckBuilder() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkError, setBulkError] = useState('');
+  const [refreshLoading, setRefreshLoading] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState('');
+  const [refreshError, setRefreshError] = useState('');
 
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
@@ -203,6 +208,53 @@ export default function DeckBuilder() {
     }
   };
 
+  const handleRefreshPrices = async () => {
+    if (deck.cards.length === 0) return;
+
+    setRefreshLoading(true);
+    setRefreshMessage('');
+    setRefreshError('');
+
+    try {
+      let refreshedCount = 0;
+      let missingCount = 0;
+
+      const refreshedCards = await Promise.all(
+        deck.cards.map(async (card) => {
+          const latest = await getCardById(card.scryfallId);
+          if (!latest) {
+            missingCount += 1;
+            return card;
+          }
+
+          refreshedCount += 1;
+          return {
+            ...card,
+            name: latest.name,
+            set_name: latest.set_name,
+            price: latest.prices.usd,
+            colors: latest.colors ?? [],
+            imageUri: getCardImage(latest) || card.imageUri,
+            cmc: latest.cmc,
+            type_line: latest.type_line,
+            mana_cost: latest.mana_cost,
+          };
+        })
+      );
+
+      await updateDeck(deck.id, { cards: refreshedCards });
+      setRefreshMessage(
+        missingCount > 0
+          ? `Updated ${refreshedCount} card prices. ${missingCount} cards could not be refreshed.`
+          : `Updated ${refreshedCount} card prices.`
+      );
+    } catch (error: unknown) {
+      setRefreshError(error instanceof Error ? error.message : 'Price refresh failed');
+    } finally {
+      setRefreshLoading(false);
+    }
+  };
+
   // Mana curve: group main cards by cmc
   const curveBuckets: Record<number, number> = {};
   for (const c of mainCards) {
@@ -226,8 +278,13 @@ export default function DeckBuilder() {
       <div className="page-header">
         <Link to="/decks" className="back-link">← Decks</Link>
         <h2 className="page-title">{deck.name}</h2>
-        <button className="btn btn-primary" onClick={() => void exportDeck(deck)}>Export XLSX</button>
+        <button className="btn btn-ghost" onClick={handleRefreshPrices} disabled={refreshLoading || deck.cards.length === 0}>
+          {refreshLoading ? 'Refreshing…' : 'Refresh Prices'}
+        </button>
+        <button className="btn btn-primary" onClick={() => void exportDeck(deck, settings)}>Export XLSX</button>
       </div>
+      {refreshMessage && <div className="success-msg">{refreshMessage}</div>}
+      {refreshError && <div className="error-msg">{refreshError}</div>}
 
       <div className="deck-layout">
         <div className="deck-main-col">
@@ -299,7 +356,7 @@ export default function DeckBuilder() {
             <div className="bulk-import-head">
               <div>
                 <h4>Paste Card List</h4>
-                <p className="muted">Imports into the current {activeTab === 'side' ? 'sideboard' : 'main deck'} tab.</p>
+                <p className="muted">Imports into the current {activeTab === 'side' ? 'sideboard' : 'main deck'} tab. Use `[SET]` for specific printings.</p>
               </div>
               <button className="btn btn-primary" onClick={handleBulkImport} disabled={bulkLoading || !bulkInput.trim()}>
                 {bulkLoading ? 'Importing…' : `Add to ${activeTab === 'side' ? 'Sideboard' : 'Main Deck'}`}

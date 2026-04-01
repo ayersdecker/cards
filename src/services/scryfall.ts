@@ -24,19 +24,44 @@ export async function getCardByName(name: string): Promise<ScryfallCard | null> 
   return res.json();
 }
 
+export async function getCardByExactName(
+  name: string,
+  setCode?: string
+): Promise<ScryfallCard | null> {
+  const cleanedName = name.trim();
+  if (!cleanedName) return null;
+
+  let query = `!"${cleanedName.replace(/"/g, '\\"')}"`;
+  if (setCode?.trim()) {
+    query += ` set:${setCode.trim().toLowerCase()}`;
+  }
+
+  const params = new URLSearchParams({
+    q: query,
+    unique: 'prints',
+    order: 'released',
+    dir: 'desc',
+  });
+
+  const res = await fetch(`${BASE}/cards/search?${params}`);
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as ScryfallSearchResponse;
+  return data.data[0] ?? null;
+}
+
+export async function getCardById(id: string): Promise<ScryfallCard | null> {
+  const res = await fetch(`${BASE}/cards/${id}`);
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export function getCardImage(card: ScryfallCard): string {
   return (
     card.image_uris?.normal ??
     card.card_faces?.[0]?.image_uris?.normal ??
     ''
   );
-}
-
-export function getStorageRec(priceStr: string | null): string {
-  const price = parseFloat(priceStr ?? '0');
-  if (isNaN(price) || price < 1) return 'Back';
-  if (price <= 12) return 'Binder';
-  return 'Case';
 }
 
 export const COLOR_MAP: Record<string, string> = {

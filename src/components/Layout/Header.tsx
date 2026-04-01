@@ -17,6 +17,7 @@ export default function Header() {
     { to: '/collections', label: 'Collections' },
     { to: '/decks', label: 'Decks' },
     { to: '/recognize', label: 'AI Scan' },
+    { to: '/settings', label: 'Settings' },
   ];
 
   return (

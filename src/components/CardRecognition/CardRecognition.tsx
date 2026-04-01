@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { recognizeCard } from '../../services/openai';
-import { getCardByName, getCardImage, getStorageRec } from '../../services/scryfall';
+import { getCardByName, getCardImage } from '../../services/scryfall';
 import type { ScryfallCard } from '../../types';
 import CardDetail from '../Cards/CardDetail';
+import { useStorageSettings } from '../../context/StorageSettingsContext';
+import { getStorageRec } from '../../services/storageSettings';
 
 export default function CardRecognition() {
+  const { settings } = useStorageSettings();
   const [preview, setPreview] = useState<string | null>(null);
   const [base64, setBase64] = useState<string>('');
   const [cardName, setCardName] = useState('');
@@ -98,7 +101,7 @@ export default function CardRecognition() {
             <div className="card-thumb-price accent-yellow">
               {card.prices.usd ? `$${card.prices.usd}` : 'N/A'}
             </div>
-            <div className="muted">{getStorageRec(card.prices.usd)}</div>
+            <div className="muted">{getStorageRec(card.prices.usd, settings)}</div>
           </div>
           {showDetail && (
             <CardDetail card={card} onClose={() => setShowDetail(false)} />

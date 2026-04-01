@@ -1,6 +1,7 @@
 import writeXlsxFile from 'write-excel-file/browser';
 import type { Schema } from 'write-excel-file/browser';
-import { getStorageRec, mapColors } from './scryfall';
+import { mapColors } from './scryfall';
+import { DEFAULT_STORAGE_SETTINGS, getStorageRec, type StorageSettings } from './storageSettings';
 import type { Collection, Deck } from '../types';
 
 type BaseCardRow = {
@@ -35,7 +36,11 @@ const COLLECTION_SCHEMA: Schema<CollectionCardRow> = [
     value: (c) => (parseFloat(c.price ?? '0') || 0) * c.quantity,
   },
   { column: 'Color', type: String, value: (c) => mapColors(c.colors) },
-  { column: 'Storage Recommendation', type: String, value: (c) => getStorageRec(c.price) },
+  {
+    column: 'Storage Recommendation',
+    type: String,
+    value: (c) => getStorageRec(c.price, DEFAULT_STORAGE_SETTINGS),
+  },
   { column: 'Scryfall ID', type: String, value: (c) => c.scryfallId },
   { column: 'Image URL', type: String, value: (c) => c.imageUri || 'N/A' },
   {
@@ -60,21 +65,43 @@ const DECK_SCHEMA: Schema<DeckCardRow> = [
   { column: 'CMC', type: Number, value: (c) => c.cmc },
   { column: 'Mana Cost', type: String, value: (c) => c.mana_cost ?? '' },
   { column: 'Type Line', type: String, value: (c) => c.type_line },
-  { column: 'Storage Recommendation', type: String, value: (c) => getStorageRec(c.price) },
+  {
+    column: 'Storage Recommendation',
+    type: String,
+    value: (c) => getStorageRec(c.price, DEFAULT_STORAGE_SETTINGS),
+  },
   { column: 'Scryfall ID', type: String, value: (c) => c.scryfallId },
   { column: 'Image URL', type: String, value: (c) => c.imageUri || 'N/A' },
 ];
 
-export async function exportCollection(collection: Collection): Promise<void> {
+export async function exportCollection(
+  collection: Collection,
+  settings: StorageSettings = DEFAULT_STORAGE_SETTINGS
+): Promise<void> {
   await writeXlsxFile(collection.cards as CollectionCardRow[], {
-    schema: COLLECTION_SCHEMA,
+    schema: COLLECTION_SCHEMA.map((column) => {
+      if (column.column !== 'Storage Recommendation') return column;
+      return {
+        ...column,
+        value: (c: CollectionCardRow) => getStorageRec(c.price, settings),
+      };
+    }) as Schema<CollectionCardRow>,
     fileName: `${collection.name}.xlsx`,
   });
 }
 
-export async function exportDeck(deck: Deck): Promise<void> {
+export async function exportDeck(
+  deck: Deck,
+  settings: StorageSettings = DEFAULT_STORAGE_SETTINGS
+): Promise<void> {
   await writeXlsxFile(deck.cards as DeckCardRow[], {
-    schema: DECK_SCHEMA,
+    schema: DECK_SCHEMA.map((column) => {
+      if (column.column !== 'Storage Recommendation') return column;
+      return {
+        ...column,
+        value: (c: DeckCardRow) => getStorageRec(c.price, settings),
+      };
+    }) as Schema<DeckCardRow>,
     fileName: `${deck.name}.xlsx`,
   });
 }
