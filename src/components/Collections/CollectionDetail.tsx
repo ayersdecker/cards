@@ -18,6 +18,22 @@ export default function CollectionDetail() {
     await updateCollection(col.id, { cards: updated });
   };
 
+  const changeQty = async (scryfallId: string, delta: number) => {
+    const card = col.cards.find((entry) => entry.scryfallId === scryfallId);
+    if (!card) return;
+
+    const nextQuantity = card.quantity + delta;
+    if (nextQuantity <= 0) {
+      await removeCard(scryfallId);
+      return;
+    }
+
+    const updated = col.cards.map((entry) =>
+      entry.scryfallId === scryfallId ? { ...entry, quantity: nextQuantity } : entry
+    );
+    await updateCollection(col.id, { cards: updated });
+  };
+
   const totalValue = col.cards
     .reduce((sum, c) => sum + (parseFloat(c.price ?? '0') || 0) * c.quantity, 0)
     .toFixed(2);
@@ -53,22 +69,28 @@ export default function CollectionDetail() {
           <tbody>
             {col.cards.map((c) => (
               <tr key={c.scryfallId}>
-                <td>
+                <td data-label="Card">
                   {c.imageUri && (
                     <img src={c.imageUri} alt={c.name} className="table-card-img" />
                   )}
                 </td>
-                <td>{c.name}</td>
-                <td>{c.set_name}</td>
-                <td>{mapColors(c.colors)}</td>
-                <td className="accent-yellow">{c.price ? `$${c.price}` : 'N/A'}</td>
-                <td>{c.quantity}</td>
-                <td>
+                <td data-label="Name">{c.name}</td>
+                <td data-label="Set">{c.set_name}</td>
+                <td data-label="Color">{mapColors(c.colors)}</td>
+                <td data-label="Price" className="accent-yellow">{c.price ? `$${c.price}` : 'N/A'}</td>
+                <td data-label="Qty">
+                  <div className="qty-control">
+                    <button className="qty-btn" onClick={() => changeQty(c.scryfallId, -1)} aria-label={`Decrease quantity for ${c.name}`}>−</button>
+                    <span className="qty-val">{c.quantity}</span>
+                    <button className="qty-btn" onClick={() => changeQty(c.scryfallId, 1)} aria-label={`Increase quantity for ${c.name}`}>+</button>
+                  </div>
+                </td>
+                <td data-label="Storage">
                   <span className={`badge badge-${getStorageRec(c.price).toLowerCase()}`}>
                     {getStorageRec(c.price)}
                   </span>
                 </td>
-                <td>
+                <td data-label="Actions">
                   <button
                     className="btn btn-sm btn-danger"
                     onClick={() => removeCard(c.scryfallId)}
