@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout/Layout';
 import LoginPage from './components/Auth/LoginPage';
@@ -13,7 +13,7 @@ import CardRecognition from './components/CardRecognition/CardRecognition';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/cards">
+      <HashRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<Navigate to="/login" replace />} />
@@ -27,7 +27,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }
