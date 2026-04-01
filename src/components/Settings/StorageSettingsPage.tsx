@@ -1,109 +1,257 @@
 import React, { useMemo, useState } from 'react';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
-import { DEFAULT_STORAGE_SETTINGS } from '../../services/storageSettings';
+import {
+  DEFAULT_STORAGE_SETTINGS,
+  createEmptyRule,
+  type StorageRule,
+  type StorageTone,
+} from '../../services/storageSettings';
+
+const TONED_LABELS: Record<StorageTone, string> = {
+  low: 'Magenta',
+  mid: 'Cyan',
+  high: 'Yellow',
+};
+
+function parseColors(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((value) => value.trim().toUpperCase())
+    .filter((value) => ['W', 'U', 'B', 'R', 'G'].includes(value));
+}
+
+function formatColors(colors?: string[]): string {
+  if (!colors || colors.length === 0) return '';
+  return colors.join(', ');
+}
 
 export default function StorageSettingsPage() {
   const { settings, updateSettings, resetSettings } = useStorageSettings();
-  const [lowMax, setLowMax] = useState(String(settings.lowMax));
-  const [midMax, setMidMax] = useState(String(settings.midMax));
-  const [lowLabel, setLowLabel] = useState(settings.lowLabel);
-  const [midLabel, setMidLabel] = useState(settings.midLabel);
-  const [highLabel, setHighLabel] = useState(settings.highLabel);
+  const [rules, setRules] = useState<StorageRule[]>(settings.rules);
+  const [fallbackLabel, setFallbackLabel] = useState(settings.fallbackLabel);
+  const [fallbackTone, setFallbackTone] = useState<StorageTone>(settings.fallbackTone);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const preview = useMemo(
+  const examples = useMemo(
     () => [
-      { price: '$0.50', label: lowLabel || settings.lowLabel },
-      { price: '$5.00', label: midLabel || settings.midLabel },
-      { price: '$25.00', label: highLabel || settings.highLabel },
+      {
+        name: 'Lightning Bolt',
+        meta: 'R instant, CMC 1, $2.10',
+      },
+      {
+        name: 'Gilded Lotus',
+        meta: 'Artifact, CMC 5, $0.70',
+      },
+      {
+        name: 'Ragavan, Nimble Pilferer',
+        meta: 'R creature, CMC 1, $35.00',
+      },
     ],
-    [highLabel, lowLabel, midLabel, settings.highLabel, settings.lowLabel, settings.midLabel]
+    []
   );
+
+  const updateRule = (id: string, patch: Partial<StorageRule>) => {
+    setRules((prev) => prev.map((rule) => (rule.id === id ? { ...rule, ...patch } : rule)));
+  };
+
+  const removeRule = (id: string) => {
+    setRules((prev) => prev.filter((rule) => rule.id !== id));
+  };
+
+  const moveRule = (id: string, direction: -1 | 1) => {
+    setRules((prev) => {
+      const index = prev.findIndex((rule) => rule.id === id);
+      if (index < 0) return prev;
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const next = [...prev];
+      const [item] = next.splice(index, 1);
+      next.splice(nextIndex, 0, item);
+      return next;
+    });
+  };
+
+  const handleAddRule = () => {
+    setRules((prev) => [...prev, createEmptyRule(prev.length)]);
+  };
 
   const handleSave = (event: React.FormEvent) => {
     event.preventDefault();
 
-    const parsedLow = Number(lowMax);
-    const parsedMid = Number(midMax);
-
-    if (!Number.isFinite(parsedLow) || parsedLow < 0) {
-      setError('Low price threshold must be a number >= 0.');
+    if (!fallbackLabel.trim()) {
+      setError('Fallback label is required.');
       setMessage('');
       return;
     }
 
-    if (!Number.isFinite(parsedMid) || parsedMid < parsedLow) {
-      setError('Mid price threshold must be a number >= low threshold.');
+    if (rules.length === 0) {
+      setError('Add at least one rule.');
       setMessage('');
       return;
     }
 
-    if (!lowLabel.trim() || !midLabel.trim() || !highLabel.trim()) {
-      setError('All storage labels are required.');
+    const invalidRule = rules.find((rule) => !rule.label?.trim());
+    if (invalidRule) {
+      setError('Every rule needs a label.');
       setMessage('');
       return;
     }
 
     updateSettings({
-      lowMax: parsedLow,
-      midMax: parsedMid,
-      lowLabel,
-      midLabel,
-      highLabel,
+      fallbackLabel,
+      fallbackTone,
+      rules,
     });
 
     setError('');
-    setMessage('Storage settings saved.');
+    setMessage('Rule settings saved. Rules are checked top-to-bottom.');
   };
 
   const handleReset = () => {
     resetSettings();
-    setLowMax(String(DEFAULT_STORAGE_SETTINGS.lowMax));
-    setMidMax(String(DEFAULT_STORAGE_SETTINGS.midMax));
-    setLowLabel(DEFAULT_STORAGE_SETTINGS.lowLabel);
-    setMidLabel(DEFAULT_STORAGE_SETTINGS.midLabel);
-    setHighLabel(DEFAULT_STORAGE_SETTINGS.highLabel);
+    setRules(DEFAULT_STORAGE_SETTINGS.rules);
+    setFallbackLabel(DEFAULT_STORAGE_SETTINGS.fallbackLabel);
+    setFallbackTone(DEFAULT_STORAGE_SETTINGS.fallbackTone);
     setError('');
-    setMessage('Storage settings reset to defaults.');
+    setMessage('Rule settings reset to defaults.');
   };
 
   return (
     <div className="page">
-      <h2 className="page-title">Storage <span className="accent-cyan">Settings</span></h2>
-      <p className="muted">Customize storage recommendation thresholds and labels used across card views and XLSX exports.</p>
+      <h2 className="page-title">Storage <span className="accent-cyan">Rule Builder</span></h2>
+      <p className="muted">Create your own rules using any combination of price, color, type, card name, set code, and CMC. First matching rule wins.</p>
 
       <form className="settings-form" onSubmit={handleSave}>
-        <div className="settings-grid">
-          <label className="settings-field">
-            <span>Low Tier Max Price (USD)</span>
-            <input type="number" min="0" step="0.01" value={lowMax} onChange={(e) => setLowMax(e.target.value)} />
-          </label>
-
-          <label className="settings-field">
-            <span>Mid Tier Max Price (USD)</span>
-            <input type="number" min="0" step="0.01" value={midMax} onChange={(e) => setMidMax(e.target.value)} />
-          </label>
-
-          <label className="settings-field">
-            <span>Low Tier Label</span>
-            <input type="text" value={lowLabel} onChange={(e) => setLowLabel(e.target.value)} />
-          </label>
-
-          <label className="settings-field">
-            <span>Mid Tier Label</span>
-            <input type="text" value={midLabel} onChange={(e) => setMidLabel(e.target.value)} />
-          </label>
-
-          <label className="settings-field">
-            <span>High Tier Label</span>
-            <input type="text" value={highLabel} onChange={(e) => setHighLabel(e.target.value)} />
-          </label>
+        <div className="settings-actions">
+          <button type="button" className="btn btn-outline" onClick={handleAddRule}>Add Rule</button>
+          <button type="submit" className="btn btn-primary">Save Rules</button>
+          <button type="button" className="btn btn-ghost" onClick={handleReset}>Reset Defaults</button>
         </div>
 
-        <div className="settings-actions">
-          <button type="submit" className="btn btn-primary">Save Settings</button>
-          <button type="button" className="btn btn-ghost" onClick={handleReset}>Reset Defaults</button>
+        <div className="settings-rule-list">
+          {rules.map((rule, index) => (
+            <div className="settings-rule-card" key={rule.id}>
+              <div className="settings-rule-head">
+                <strong>Rule {index + 1}</strong>
+                <div className="settings-rule-head-actions">
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => moveRule(rule.id, -1)}>↑</button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => moveRule(rule.id, 1)}>↓</button>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => removeRule(rule.id)}>Delete</button>
+                </div>
+              </div>
+
+              <div className="settings-grid">
+                <label className="settings-field">
+                  <span>Result Label</span>
+                  <input value={rule.label} onChange={(e) => updateRule(rule.id, { label: e.target.value })} />
+                </label>
+
+                <label className="settings-field">
+                  <span>Badge Tone</span>
+                  <select value={rule.tone} onChange={(e) => updateRule(rule.id, { tone: e.target.value as StorageTone })}>
+                    <option value="low">{TONED_LABELS.low}</option>
+                    <option value="mid">{TONED_LABELS.mid}</option>
+                    <option value="high">{TONED_LABELS.high}</option>
+                  </select>
+                </label>
+
+                <label className="settings-field">
+                  <span>Min Price</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rule.minPrice ?? ''}
+                    onChange={(e) => updateRule(rule.id, { minPrice: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Max Price</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={rule.maxPrice ?? ''}
+                    onChange={(e) => updateRule(rule.id, { maxPrice: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Min CMC</span>
+                  <input
+                    type="number"
+                    step="1"
+                    value={rule.minCmc ?? ''}
+                    onChange={(e) => updateRule(rule.id, { minCmc: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Max CMC</span>
+                  <input
+                    type="number"
+                    step="1"
+                    value={rule.maxCmc ?? ''}
+                    onChange={(e) => updateRule(rule.id, { maxCmc: e.target.value === '' ? undefined : Number(e.target.value) })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Colors (Any)</span>
+                  <input
+                    placeholder="W, U, B, R, G"
+                    value={formatColors(rule.colorsAny)}
+                    onChange={(e) => updateRule(rule.id, { colorsAny: parseColors(e.target.value) })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Type Contains</span>
+                  <input
+                    placeholder="Creature, Artifact, Land..."
+                    value={rule.typeIncludes ?? ''}
+                    onChange={(e) => updateRule(rule.id, { typeIncludes: e.target.value || undefined })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Name Contains</span>
+                  <input
+                    placeholder="Dragon, Bolt, etc."
+                    value={rule.nameIncludes ?? ''}
+                    onChange={(e) => updateRule(rule.id, { nameIncludes: e.target.value || undefined })}
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Set Code</span>
+                  <input
+                    placeholder="M11"
+                    value={rule.setCode ?? ''}
+                    onChange={(e) => updateRule(rule.id, { setCode: e.target.value || undefined })}
+                  />
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="settings-fallback-card">
+          <h3>Fallback (If No Rules Match)</h3>
+          <div className="settings-grid">
+            <label className="settings-field">
+              <span>Fallback Label</span>
+              <input value={fallbackLabel} onChange={(e) => setFallbackLabel(e.target.value)} />
+            </label>
+            <label className="settings-field">
+              <span>Fallback Badge Tone</span>
+              <select value={fallbackTone} onChange={(e) => setFallbackTone(e.target.value as StorageTone)}>
+                <option value="low">{TONED_LABELS.low}</option>
+                <option value="mid">{TONED_LABELS.mid}</option>
+                <option value="high">{TONED_LABELS.high}</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         {message && <div className="success-msg">{message}</div>}
@@ -111,12 +259,13 @@ export default function StorageSettingsPage() {
       </form>
 
       <section className="settings-preview">
-        <h3>Preview</h3>
+        <h3>How Rules Work</h3>
+        <p className="muted">Rules are checked in order. The first rule that matches the card metadata is used.</p>
         <div className="settings-preview-grid">
-          {preview.map((item) => (
-            <div key={item.price} className="settings-preview-card">
-              <span className="muted">{item.price}</span>
-              <strong>{item.label}</strong>
+          {examples.map((example) => (
+            <div key={example.name} className="settings-preview-card">
+              <strong>{example.name}</strong>
+              <span className="muted">{example.meta}</span>
             </div>
           ))}
         </div>

@@ -32,6 +32,7 @@ export interface StorageInput {
 }
 
 const STORAGE_SETTINGS_KEY = 'mtg-storage-settings-v2';
+const LEGACY_STORAGE_SETTINGS_KEY = 'mtg-storage-settings-v1';
 
 function makeDefaultRules(): StorageRule[] {
   return [
@@ -123,8 +124,9 @@ function migrateV1Settings(raw: unknown): StorageSettings | null {
 
   if (typeof maybe.lowMax !== 'number' && typeof maybe.midMax !== 'number') return null;
 
-  const lowMax = Number.isFinite(maybe.lowMax) ? maybe.lowMax : 1;
-  const midMax = Number.isFinite(maybe.midMax) ? Math.max(lowMax, maybe.midMax) : 12;
+  const lowMax = typeof maybe.lowMax === 'number' && Number.isFinite(maybe.lowMax) ? maybe.lowMax : 1;
+  const midCandidate = typeof maybe.midMax === 'number' && Number.isFinite(maybe.midMax) ? maybe.midMax : 12;
+  const midMax = Math.max(lowMax, midCandidate);
 
   return {
     fallbackLabel: (maybe.lowLabel || 'Back').trim() || 'Back',
@@ -220,7 +222,16 @@ export function loadStorageSettings(): StorageSettings {
 
   try {
     const raw = window.localStorage.getItem(STORAGE_SETTINGS_KEY);
-    if (!raw) return DEFAULT_STORAGE_SETTINGS;
+    if (!raw) {
+      const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_SETTINGS_KEY);
+      if (!legacyRaw) return DEFAULT_STORAGE_SETTINGS;
+      const legacyParsed = JSON.parse(legacyRaw) as unknown;
+      const migratedLegacy = migrateV1Settings(legacyParsed);
+      if (!migratedLegacy) return DEFAULT_STORAGE_SETTINGS;
+      const normalizedLegacy = normalizeStorageSettings(migratedLegacy);
+      saveStorageSettings(normalizedLegacy);
+      return normalizedLegacy;
+    }
 
     const parsed = JSON.parse(raw) as StorageSettings;
     if (!parsed || typeof parsed !== 'object') return DEFAULT_STORAGE_SETTINGS;

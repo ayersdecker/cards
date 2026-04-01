@@ -394,8 +394,48 @@ input:focus, textarea:focus, select:focus {
 
 .settings-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 1rem;
+}
+
+.settings-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.settings-rule-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.9rem;
+}
+
+.settings-rule-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  gap: 0.8rem;
+}
+
+.settings-rule-head-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.settings-fallback-card {
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.9rem;
+}
+
+.settings-fallback-card h3 {
+  margin-bottom: 0.6rem;
 }
 
 .settings-preview {
@@ -843,6 +883,20 @@ input:focus, textarea:focus, select:focus {
 
   .settings-actions .btn {
     width: 100%;
+    justify-content: center;
+  }
+
+  .settings-rule-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .settings-rule-head-actions {
+    width: 100%;
+  }
+
+  .settings-rule-head-actions .btn {
+    flex: 1;
     justify-content: center;
   }
 

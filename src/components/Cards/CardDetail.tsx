@@ -62,6 +62,7 @@ export default function CardDetail({ card, onClose }: Props) {
       const newCard: DeckCard = {
         scryfallId: card.id,
         name: card.name,
+        set: card.set,
         set_name: card.set_name,
         price: card.prices.usd,
         colors: card.colors ?? [],
