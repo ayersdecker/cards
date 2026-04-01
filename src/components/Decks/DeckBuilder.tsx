@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDecks } from '../../hooks/useFirestore';
 import { searchCards, getCardImage, getSimilarCards } from '../../services/scryfall';
+import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
 
@@ -27,6 +28,10 @@ export default function DeckBuilder() {
   const [hotswapOptions, setHotswapOptions] = useState<ScryfallCard[]>([]);
   const [loadingHotswap, setLoadingHotswap] = useState(false);
   const [activeTab, setActiveTab] = useState<'main' | 'side'>('main');
+  const [bulkInput, setBulkInput] = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [bulkError, setBulkError] = useState('');
 
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
@@ -142,6 +147,62 @@ export default function DeckBuilder() {
     setHotswapOptions([]);
   };
 
+  const handleBulkImport = async () => {
+    if (!bulkInput.trim()) return;
+
+    setBulkLoading(true);
+    setBulkError('');
+    setBulkMessage('');
+
+    try {
+      const { resolved, missing } = await resolveBulkCardList(bulkInput);
+
+      if (resolved.length === 0) {
+        setBulkError(missing.length > 0 ? `No cards were imported. Missing: ${missing.join(', ')}` : 'No valid card entries found.');
+        return;
+      }
+
+      const targetSideboard = activeTab === 'side';
+      const nextCards = [...deck.cards];
+
+      for (const entry of resolved) {
+        const existing = nextCards.find(
+          (card) => card.scryfallId === entry.card.id && card.isSideboard === targetSideboard
+        );
+
+        if (existing) {
+          existing.quantity += entry.quantity;
+        } else {
+          nextCards.push({
+            scryfallId: entry.card.id,
+            name: entry.card.name,
+            set_name: entry.card.set_name,
+            price: entry.card.prices.usd,
+            colors: entry.card.colors ?? [],
+            imageUri: getCardImage(entry.card),
+            quantity: entry.quantity,
+            cmc: entry.card.cmc,
+            type_line: entry.card.type_line,
+            mana_cost: entry.card.mana_cost,
+            isSideboard: targetSideboard,
+          });
+        }
+      }
+
+      await updateDeck(deck.id, { cards: nextCards });
+      setBulkInput('');
+      setBulkMessage(
+        missing.length > 0
+          ? `Imported ${resolved.length} card names to ${targetSideboard ? 'sideboard' : 'main deck'}. Missing: ${missing.join(', ')}`
+          : `Imported ${resolved.length} card names to ${targetSideboard ? 'sideboard' : 'main deck'}.`
+      );
+    } catch (error: unknown) {
+      setBulkError(error instanceof Error ? error.message : 'Bulk import failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   // Mana curve: group main cards by cmc
   const curveBuckets: Record<number, number> = {};
   for (const c of mainCards) {
@@ -232,6 +293,27 @@ export default function DeckBuilder() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="bulk-import-card">
+            <div className="bulk-import-head">
+              <div>
+                <h4>Paste Card List</h4>
+                <p className="muted">Imports into the current {activeTab === 'side' ? 'sideboard' : 'main deck'} tab.</p>
+              </div>
+              <button className="btn btn-primary" onClick={handleBulkImport} disabled={bulkLoading || !bulkInput.trim()}>
+                {bulkLoading ? 'Importing…' : `Add to ${activeTab === 'side' ? 'Sideboard' : 'Main Deck'}`}
+              </button>
+            </div>
+            <textarea
+              className="bulk-import-input"
+              placeholder={"4 Lightning Bolt\n2 Counterspell\nSol Ring x1"}
+              value={bulkInput}
+              onChange={(event) => setBulkInput(event.target.value)}
+              rows={6}
+            />
+            {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
+            {bulkError && <div className="error-msg">{bulkError}</div>}
           </div>
         </div>
 

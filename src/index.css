@@ -418,6 +418,33 @@ input:focus, textarea:focus, select:focus {
   flex-wrap: wrap;
 }
 
+.bulk-import-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.bulk-import-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.bulk-import-head h3,
+.bulk-import-head h4 {
+  margin-bottom: 0.25rem;
+}
+
+.bulk-import-input {
+  min-height: 140px;
+  resize: vertical;
+  font-family: inherit;
+}
+
 .table-wrapper { overflow-x: auto; }
 .data-table {
   width: 100%;
@@ -734,6 +761,20 @@ input:focus, textarea:focus, select:focus {
     flex-direction: column;
     gap: 0.5rem;
     padding: 1rem;
+  }
+
+  .bulk-import-card {
+    padding: 1rem;
+  }
+
+  .bulk-import-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bulk-import-head .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .data-table,
