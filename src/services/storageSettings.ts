@@ -1,49 +1,218 @@
-export type StorageTier = 'low' | 'mid' | 'high';
+export type StorageTone = 'low' | 'mid' | 'high';
+
+export interface StorageRule {
+  id: string;
+  label: string;
+  tone: StorageTone;
+  minPrice?: number;
+  maxPrice?: number;
+  minCmc?: number;
+  maxCmc?: number;
+  colorsAny?: string[];
+  typeIncludes?: string;
+  nameIncludes?: string;
+  setCode?: string;
+}
 
 export interface StorageSettings {
-  lowMax: number;
-  midMax: number;
-  lowLabel: string;
-  midLabel: string;
-  highLabel: string;
+  fallbackLabel: string;
+  fallbackTone: StorageTone;
+  rules: StorageRule[];
+}
+
+export interface StorageInput {
+  price: string | null;
+  name?: string;
+  set?: string;
+  set_name?: string;
+  colors?: string[];
+  cmc?: number;
+  type_line?: string;
+  mana_cost?: string;
+}
+
+const STORAGE_SETTINGS_KEY = 'mtg-storage-settings-v2';
+
+function makeDefaultRules(): StorageRule[] {
+  return [
+    {
+      id: 'price-low',
+      label: 'Back',
+      tone: 'low',
+      maxPrice: 0.99,
+    },
+    {
+      id: 'price-mid',
+      label: 'Binder',
+      tone: 'mid',
+      minPrice: 1,
+      maxPrice: 12,
+    },
+    {
+      id: 'price-high',
+      label: 'Case',
+      tone: 'high',
+      minPrice: 12.01,
+    },
+  ];
 }
 
 export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
-  lowMax: 1,
-  midMax: 12,
-  lowLabel: 'Back',
-  midLabel: 'Binder',
-  highLabel: 'Case',
+  fallbackLabel: 'Back',
+  fallbackTone: 'low',
+  rules: makeDefaultRules(),
 };
 
-const STORAGE_SETTINGS_KEY = 'mtg-storage-settings-v1';
+function normalizeTone(tone: string | undefined): StorageTone {
+  if (tone === 'low' || tone === 'mid' || tone === 'high') return tone;
+  return 'low';
+}
 
-export function normalizeStorageSettings(settings: StorageSettings): StorageSettings {
-  const lowMax = Number.isFinite(settings.lowMax) ? Math.max(0, settings.lowMax) : DEFAULT_STORAGE_SETTINGS.lowMax;
-  const midMaxBase = Number.isFinite(settings.midMax) ? settings.midMax : DEFAULT_STORAGE_SETTINGS.midMax;
-  const midMax = Math.max(lowMax, midMaxBase);
+function normalizeColors(colors: string[] | undefined): string[] {
+  if (!colors || colors.length === 0) return [];
+  return colors
+    .map((value) => value.trim().toUpperCase())
+    .filter((value) => ['W', 'U', 'B', 'R', 'G'].includes(value));
+}
 
+function normalizeNumber(value: unknown): number | undefined {
+  if (typeof value !== 'number') return undefined;
+  if (!Number.isFinite(value)) return undefined;
+  return value;
+}
+
+export function createEmptyRule(index: number): StorageRule {
   return {
-    lowMax,
-    midMax,
-    lowLabel: settings.lowLabel.trim() || DEFAULT_STORAGE_SETTINGS.lowLabel,
-    midLabel: settings.midLabel.trim() || DEFAULT_STORAGE_SETTINGS.midLabel,
-    highLabel: settings.highLabel.trim() || DEFAULT_STORAGE_SETTINGS.highLabel,
+    id: `rule-${Date.now()}-${index}`,
+    label: `Rule ${index + 1}`,
+    tone: 'mid',
   };
 }
 
-export function getStorageTier(priceStr: string | null, settings: StorageSettings): StorageTier {
-  const price = parseFloat(priceStr ?? '0');
-  if (Number.isNaN(price) || price < settings.lowMax) return 'low';
-  if (price <= settings.midMax) return 'mid';
-  return 'high';
+export function normalizeStorageRule(rule: StorageRule, index: number): StorageRule {
+  const label = rule.label?.trim() || `Rule ${index + 1}`;
+  const minPrice = normalizeNumber(rule.minPrice);
+  const maxPrice = normalizeNumber(rule.maxPrice);
+  const minCmc = normalizeNumber(rule.minCmc);
+  const maxCmc = normalizeNumber(rule.maxCmc);
+
+  return {
+    id: rule.id || `rule-${Date.now()}-${index}`,
+    label,
+    tone: normalizeTone(rule.tone),
+    minPrice,
+    maxPrice,
+    minCmc,
+    maxCmc,
+    colorsAny: normalizeColors(rule.colorsAny),
+    typeIncludes: rule.typeIncludes?.trim() || undefined,
+    nameIncludes: rule.nameIncludes?.trim() || undefined,
+    setCode: rule.setCode?.trim().toLowerCase() || undefined,
+  };
 }
 
-export function getStorageRec(priceStr: string | null, settings: StorageSettings): string {
-  const tier = getStorageTier(priceStr, settings);
-  if (tier === 'low') return settings.lowLabel;
-  if (tier === 'mid') return settings.midLabel;
-  return settings.highLabel;
+function migrateV1Settings(raw: unknown): StorageSettings | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const maybe = raw as {
+    lowMax?: number;
+    midMax?: number;
+    lowLabel?: string;
+    midLabel?: string;
+    highLabel?: string;
+  };
+
+  if (typeof maybe.lowMax !== 'number' && typeof maybe.midMax !== 'number') return null;
+
+  const lowMax = Number.isFinite(maybe.lowMax) ? maybe.lowMax : 1;
+  const midMax = Number.isFinite(maybe.midMax) ? Math.max(lowMax, maybe.midMax) : 12;
+
+  return {
+    fallbackLabel: (maybe.lowLabel || 'Back').trim() || 'Back',
+    fallbackTone: 'low',
+    rules: [
+      {
+        id: 'price-low',
+        label: (maybe.lowLabel || 'Back').trim() || 'Back',
+        tone: 'low',
+        maxPrice: Math.max(0, lowMax),
+      },
+      {
+        id: 'price-mid',
+        label: (maybe.midLabel || 'Binder').trim() || 'Binder',
+        tone: 'mid',
+        minPrice: Math.max(0, lowMax),
+        maxPrice: Math.max(0, midMax),
+      },
+      {
+        id: 'price-high',
+        label: (maybe.highLabel || 'Case').trim() || 'Case',
+        tone: 'high',
+        minPrice: Math.max(0, midMax),
+      },
+    ],
+  };
+}
+
+export function normalizeStorageSettings(settings: StorageSettings): StorageSettings {
+  const rules = (settings.rules || []).map((rule, index) => normalizeStorageRule(rule, index));
+
+  return {
+    fallbackLabel: settings.fallbackLabel?.trim() || DEFAULT_STORAGE_SETTINGS.fallbackLabel,
+    fallbackTone: normalizeTone(settings.fallbackTone),
+    rules,
+  };
+}
+
+function containsIgnoreCase(value: string | undefined, needle: string | undefined): boolean {
+  if (!needle) return true;
+  if (!value) return false;
+  return value.toLowerCase().includes(needle.toLowerCase());
+}
+
+function matchesRule(input: StorageInput, rule: StorageRule): boolean {
+  const price = parseFloat(input.price ?? '0');
+  const safePrice = Number.isNaN(price) ? 0 : price;
+
+  if (rule.minPrice !== undefined && safePrice < rule.minPrice) return false;
+  if (rule.maxPrice !== undefined && safePrice > rule.maxPrice) return false;
+
+  if (rule.minCmc !== undefined) {
+    if (input.cmc === undefined || input.cmc < rule.minCmc) return false;
+  }
+
+  if (rule.maxCmc !== undefined) {
+    if (input.cmc === undefined || input.cmc > rule.maxCmc) return false;
+  }
+
+  if (rule.colorsAny && rule.colorsAny.length > 0) {
+    const inputColors = (input.colors || []).map((value) => value.toUpperCase());
+    const hasColorMatch = rule.colorsAny.some((color) => inputColors.includes(color));
+    if (!hasColorMatch) return false;
+  }
+
+  if (!containsIgnoreCase(input.type_line, rule.typeIncludes)) return false;
+  if (!containsIgnoreCase(input.name, rule.nameIncludes)) return false;
+
+  if (rule.setCode) {
+    const inputSet = input.set?.toLowerCase();
+    if (!inputSet || inputSet !== rule.setCode.toLowerCase()) return false;
+  }
+
+  return true;
+}
+
+export function getStorageRec(input: StorageInput, settings: StorageSettings): string {
+  for (const rule of settings.rules) {
+    if (matchesRule(input, rule)) return rule.label;
+  }
+  return settings.fallbackLabel;
+}
+
+export function getStorageTone(input: StorageInput, settings: StorageSettings): StorageTone {
+  for (const rule of settings.rules) {
+    if (matchesRule(input, rule)) return rule.tone;
+  }
+  return settings.fallbackTone;
 }
 
 export function loadStorageSettings(): StorageSettings {
@@ -53,14 +222,13 @@ export function loadStorageSettings(): StorageSettings {
     const raw = window.localStorage.getItem(STORAGE_SETTINGS_KEY);
     if (!raw) return DEFAULT_STORAGE_SETTINGS;
 
-    const parsed = JSON.parse(raw) as Partial<StorageSettings>;
-    return normalizeStorageSettings({
-      lowMax: parsed.lowMax ?? DEFAULT_STORAGE_SETTINGS.lowMax,
-      midMax: parsed.midMax ?? DEFAULT_STORAGE_SETTINGS.midMax,
-      lowLabel: parsed.lowLabel ?? DEFAULT_STORAGE_SETTINGS.lowLabel,
-      midLabel: parsed.midLabel ?? DEFAULT_STORAGE_SETTINGS.midLabel,
-      highLabel: parsed.highLabel ?? DEFAULT_STORAGE_SETTINGS.highLabel,
-    });
+    const parsed = JSON.parse(raw) as StorageSettings;
+    if (!parsed || typeof parsed !== 'object') return DEFAULT_STORAGE_SETTINGS;
+
+    const migrated = migrateV1Settings(parsed);
+    if (migrated) return normalizeStorageSettings(migrated);
+
+    return normalizeStorageSettings(parsed);
   } catch {
     return DEFAULT_STORAGE_SETTINGS;
   }
@@ -68,7 +236,6 @@ export function loadStorageSettings(): StorageSettings {
 
 export function saveStorageSettings(settings: StorageSettings): void {
   if (typeof window === 'undefined') return;
-
   const normalized = normalizeStorageSettings(settings);
   window.localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(normalized));
 }

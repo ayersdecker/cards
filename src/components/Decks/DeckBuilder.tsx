@@ -181,6 +181,7 @@ export default function DeckBuilder() {
           nextCards.push({
             scryfallId: entry.card.id,
             name: entry.card.name,
+            set: entry.card.set,
             set_name: entry.card.set_name,
             price: entry.card.prices.usd,
             colors: entry.card.colors ?? [],
@@ -231,6 +232,7 @@ export default function DeckBuilder() {
           return {
             ...card,
             name: latest.name,
+            set: latest.set,
             set_name: latest.set_name,
             price: latest.prices.usd,
             colors: latest.colors ?? [],

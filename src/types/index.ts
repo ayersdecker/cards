@@ -45,12 +45,16 @@ export interface ScryfallSearchResponse {
 export interface CollectionCard {
   scryfallId: string;
   name: string;
+  set?: string;
   set_name: string;
   price: string | null;
   colors: string[];
   imageUri: string;
   addedAt: number;
   quantity: number;
+  cmc?: number;
+  type_line?: string;
+  mana_cost?: string;
 }
 
 export interface Collection {
@@ -64,6 +68,7 @@ export interface Collection {
 export interface DeckCard {
   scryfallId: string;
   name: string;
+  set?: string;
   set_name: string;
   price: string | null;
   colors: string[];

@@ -6,7 +6,7 @@ import { getCardById, getCardImage, mapColors } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportCollection } from '../../services/excel';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
-import { getStorageRec, getStorageTier } from '../../services/storageSettings';
+import { getStorageRec, getStorageTone } from '../../services/storageSettings';
 
 export default function CollectionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -74,12 +74,16 @@ export default function CollectionDetail() {
           nextCards.push({
             scryfallId: entry.card.id,
             name: entry.card.name,
+            set: entry.card.set,
             set_name: entry.card.set_name,
             price: entry.card.prices.usd,
             colors: entry.card.colors ?? [],
             imageUri: getCardImage(entry.card),
             addedAt: Date.now(),
             quantity: entry.quantity,
+            cmc: entry.card.cmc,
+            type_line: entry.card.type_line,
+            mana_cost: entry.card.mana_cost,
           });
         }
       }
@@ -121,10 +125,14 @@ export default function CollectionDetail() {
           return {
             ...card,
             name: latest.name,
+            set: latest.set,
             set_name: latest.set_name,
             price: latest.prices.usd,
             colors: latest.colors ?? [],
             imageUri: getCardImage(latest) || card.imageUri,
+            cmc: latest.cmc,
+            type_line: latest.type_line,
+            mana_cost: latest.mana_cost,
           };
         })
       );
@@ -215,8 +223,8 @@ export default function CollectionDetail() {
                   </div>
                 </td>
                 <td data-label="Storage">
-                  <span className={`badge badge-${getStorageTier(c.price, settings)}`}>
-                    {getStorageRec(c.price, settings)}
+                  <span className={`badge badge-${getStorageTone(c, settings)}`}>
+                    {getStorageRec(c, settings)}
                   </span>
                 </td>
                 <td data-label="Actions">

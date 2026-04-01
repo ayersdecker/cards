@@ -101,7 +101,16 @@ export default function CardRecognition() {
             <div className="card-thumb-price accent-yellow">
               {card.prices.usd ? `$${card.prices.usd}` : 'N/A'}
             </div>
-            <div className="muted">{getStorageRec(card.prices.usd, settings)}</div>
+            <div className="muted">{getStorageRec({
+              price: card.prices.usd,
+              name: card.name,
+              set: card.set,
+              set_name: card.set_name,
+              colors: card.colors ?? [],
+              cmc: card.cmc,
+              type_line: card.type_line,
+              mana_cost: card.mana_cost,
+            }, settings)}</div>
           </div>
           {showDetail && (
             <CardDetail card={card} onClose={() => setShowDetail(false)} />

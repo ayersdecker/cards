@@ -4,7 +4,7 @@ import { getCardImage, mapColors } from '../../services/scryfall';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
-import { getStorageRec, getStorageTier } from '../../services/storageSettings';
+import { getStorageRec, getStorageTone } from '../../services/storageSettings';
 
 interface Props {
   card: ScryfallCard;
@@ -31,12 +31,16 @@ export default function CardDetail({ card, onClose }: Props) {
       const newCard: CollectionCard = {
         scryfallId: card.id,
         name: card.name,
+        set: card.set,
         set_name: card.set_name,
         price: card.prices.usd,
         colors: card.colors ?? [],
         imageUri: getCardImage(card),
         addedAt: Date.now(),
         quantity: 1,
+        cmc: card.cmc,
+        type_line: card.type_line,
+        mana_cost: card.mana_cost,
       };
       updatedCards = [...col.cards, newCard];
     }
@@ -75,8 +79,32 @@ export default function CardDetail({ card, onClose }: Props) {
     setTimeout(() => setFeedback(''), 2000);
   };
 
-  const storageRec = getStorageRec(card.prices.usd, settings);
-  const storageTier = getStorageTier(card.prices.usd, settings);
+  const storageRec = getStorageRec(
+    {
+      price: card.prices.usd,
+      name: card.name,
+      set: card.set,
+      set_name: card.set_name,
+      colors: card.colors ?? [],
+      cmc: card.cmc,
+      type_line: card.type_line,
+      mana_cost: card.mana_cost,
+    },
+    settings
+  );
+  const storageTier = getStorageTone(
+    {
+      price: card.prices.usd,
+      name: card.name,
+      set: card.set,
+      set_name: card.set_name,
+      colors: card.colors ?? [],
+      cmc: card.cmc,
+      type_line: card.type_line,
+      mana_cost: card.mana_cost,
+    },
+    settings
+  );
   const storageClass =
     storageTier === 'high' ? 'accent-yellow' : storageTier === 'mid' ? 'accent-cyan' : 'accent-magenta';
 
