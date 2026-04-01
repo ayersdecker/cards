@@ -3,25 +3,78 @@ import type { Schema } from 'write-excel-file/browser';
 import { getStorageRec, mapColors } from './scryfall';
 import type { Collection, Deck } from '../types';
 
-type CardRow = {
+type BaseCardRow = {
   name: string;
   set_name: string;
   price: string | null;
   colors: string[];
+  quantity: number;
+  scryfallId: string;
+  imageUri: string;
 };
 
-const SCHEMA: Schema<CardRow> = [
-  { column: 'Card Name', type: String, value: (c: CardRow) => c.name },
-  { column: 'Most Recent Set', type: String, value: (c: CardRow) => c.set_name },
-  { column: 'Price (USD)', type: String, value: (c: CardRow) => (c.price ? `$${c.price}` : 'N/A') },
-  { column: 'Color', type: String, value: (c: CardRow) => mapColors(c.colors) },
-  { column: 'Storage Recommendation', type: String, value: (c: CardRow) => getStorageRec(c.price) },
+type CollectionCardRow = BaseCardRow & {
+  addedAt: number;
+};
+
+type DeckCardRow = BaseCardRow & {
+  cmc: number;
+  type_line: string;
+  mana_cost?: string;
+  isSideboard: boolean;
+};
+
+const COLLECTION_SCHEMA: Schema<CollectionCardRow> = [
+  { column: 'Card Name', type: String, value: (c) => c.name },
+  { column: 'Quantity', type: Number, value: (c) => c.quantity },
+  { column: 'Most Recent Set', type: String, value: (c) => c.set_name },
+  { column: 'Price (USD)', type: String, value: (c) => (c.price ? `$${c.price}` : 'N/A') },
+  {
+    column: 'Total Value (USD)',
+    type: Number,
+    value: (c) => (parseFloat(c.price ?? '0') || 0) * c.quantity,
+  },
+  { column: 'Color', type: String, value: (c) => mapColors(c.colors) },
+  { column: 'Storage Recommendation', type: String, value: (c) => getStorageRec(c.price) },
+  { column: 'Scryfall ID', type: String, value: (c) => c.scryfallId },
+  { column: 'Image URL', type: String, value: (c) => c.imageUri || 'N/A' },
+  {
+    column: 'Date Added',
+    type: String,
+    value: (c) => (c.addedAt ? new Date(c.addedAt).toISOString() : 'N/A'),
+  },
+];
+
+const DECK_SCHEMA: Schema<DeckCardRow> = [
+  { column: 'Card Name', type: String, value: (c) => c.name },
+  { column: 'Quantity', type: Number, value: (c) => c.quantity },
+  { column: 'Section', type: String, value: (c) => (c.isSideboard ? 'Sideboard' : 'Main Deck') },
+  { column: 'Most Recent Set', type: String, value: (c) => c.set_name },
+  { column: 'Price (USD)', type: String, value: (c) => (c.price ? `$${c.price}` : 'N/A') },
+  {
+    column: 'Total Value (USD)',
+    type: Number,
+    value: (c) => (parseFloat(c.price ?? '0') || 0) * c.quantity,
+  },
+  { column: 'Color', type: String, value: (c) => mapColors(c.colors) },
+  { column: 'CMC', type: Number, value: (c) => c.cmc },
+  { column: 'Mana Cost', type: String, value: (c) => c.mana_cost ?? '' },
+  { column: 'Type Line', type: String, value: (c) => c.type_line },
+  { column: 'Storage Recommendation', type: String, value: (c) => getStorageRec(c.price) },
+  { column: 'Scryfall ID', type: String, value: (c) => c.scryfallId },
+  { column: 'Image URL', type: String, value: (c) => c.imageUri || 'N/A' },
 ];
 
 export async function exportCollection(collection: Collection): Promise<void> {
-  await writeXlsxFile(collection.cards as CardRow[], { schema: SCHEMA, fileName: `${collection.name}.xlsx` });
+  await writeXlsxFile(collection.cards as CollectionCardRow[], {
+    schema: COLLECTION_SCHEMA,
+    fileName: `${collection.name}.xlsx`,
+  });
 }
 
 export async function exportDeck(deck: Deck): Promise<void> {
-  await writeXlsxFile(deck.cards as CardRow[], { schema: SCHEMA, fileName: `${deck.name}.xlsx` });
+  await writeXlsxFile(deck.cards as DeckCardRow[], {
+    schema: DECK_SCHEMA,
+    fileName: `${deck.name}.xlsx`,
+  });
 }
