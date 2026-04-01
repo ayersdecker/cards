@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout/Layout';
 import LoginPage from './components/Auth/LoginPage';
-import RegisterPage from './components/Auth/RegisterPage';
 import CardSearch from './components/Cards/CardSearch';
 import CollectionsList from './components/Collections/CollectionsList';
 import CollectionDetail from './components/Collections/CollectionDetail';
@@ -17,7 +16,7 @@ export default function App() {
       <BrowserRouter basename="/cards">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route element={<Layout />}>
             <Route index element={<CardSearch />} />
             <Route path="/collections" element={<CollectionsList />} />
