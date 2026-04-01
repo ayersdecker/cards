@@ -73,6 +73,7 @@ export default function DeckBuilder() {
       const newCard: DeckCard = {
         scryfallId: card.id,
         name: card.name,
+        set: card.set,
         set_name: card.set_name,
         price: card.prices.usd,
         colors: card.colors ?? [],
@@ -137,6 +138,7 @@ export default function DeckBuilder() {
             ...c,
             scryfallId: replacement.id,
             name: replacement.name,
+            set: replacement.set,
             set_name: replacement.set_name,
             price: replacement.prices.usd,
             colors: replacement.colors ?? [],
