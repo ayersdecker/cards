@@ -28,6 +28,7 @@ export default function CardGrid({ cards }: Props) {
               <div className="card-no-image">{card.name}</div>
             )}
             <div className="card-thumb-name">{card.name}</div>
+            <div className="card-thumb-set">{card.set_name} ({card.set.toUpperCase()})</div>
             <div className="card-thumb-price">
               {card.prices.usd ? `$${card.prices.usd}` : 'N/A'}
             </div>

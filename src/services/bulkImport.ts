@@ -17,6 +17,10 @@ export interface BulkImportResult {
   missing: string[];
 }
 
+interface ResolveBulkOptions {
+  preferredSetCode?: string;
+}
+
 function parseQuantityPrefix(line: string): ParsedListEntry | null {
   const match = line.match(/^(\d+)\s*x?\s+(.+)$/i);
   if (!match) return null;
@@ -92,15 +96,20 @@ export function parseBulkCardList(input: string): ParsedListEntry[] {
   return Array.from(merged.values());
 }
 
-export async function resolveBulkCardList(input: string): Promise<BulkImportResult> {
+export async function resolveBulkCardList(
+  input: string,
+  options: ResolveBulkOptions = {}
+): Promise<BulkImportResult> {
   const parsedEntries = parseBulkCardList(input);
   const resolved: ResolvedListEntry[] = [];
   const missing: string[] = [];
+  const preferredSetCode = options.preferredSetCode?.trim().toLowerCase();
 
   for (const entry of parsedEntries) {
-    let card = await getCardByExactName(entry.name, entry.setCode);
+    const resolvedSetCode = entry.setCode ?? preferredSetCode;
+    let card = await getCardByExactName(entry.name, resolvedSetCode);
 
-    if (!card && !entry.setCode) {
+    if (!card && !resolvedSetCode) {
       const fuzzy = await getCardByName(entry.name);
       if (fuzzy && normalizeName(fuzzy.name) === normalizeName(entry.name)) {
         card = fuzzy;

@@ -3,8 +3,10 @@ import { searchCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import type { ScryfallCard } from '../../types';
 import CardGrid from './CardGrid';
+import { useStorageSettings } from '../../context/StorageSettingsContext';
 
 export default function CardSearch() {
+  const { settings } = useStorageSettings();
   const [query, setQuery] = useState('');
   const [cards, setCards] = useState<ScryfallCard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -21,7 +23,9 @@ export default function CardSearch() {
     setError('');
     setBulkMessage('');
     try {
-      const res = await searchCards(query.trim());
+      const res = await searchCards(query.trim(), 1, {
+        unique: settings.includeAllPrintings ? 'prints' : 'cards',
+      });
       setCards(res.data);
       setTotal(res.total_cards);
     } catch {
@@ -40,7 +44,9 @@ export default function CardSearch() {
     setBulkMessage('');
 
     try {
-      const { resolved, missing } = await resolveBulkCardList(bulkInput);
+      const { resolved, missing } = await resolveBulkCardList(bulkInput, {
+        preferredSetCode: settings.preferredSetCode,
+      });
       const uniqueCards = resolved.map((entry) => entry.card);
 
       setCards(uniqueCards);

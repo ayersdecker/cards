@@ -18,6 +18,8 @@ export interface StorageSettings {
   fallbackLabel: string;
   fallbackTone: StorageTone;
   rules: StorageRule[];
+  includeAllPrintings: boolean;
+  preferredSetCode?: string;
 }
 
 export interface StorageInput {
@@ -62,6 +64,8 @@ export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
   fallbackLabel: 'Back',
   fallbackTone: 'low',
   rules: makeDefaultRules(),
+  includeAllPrintings: true,
+  preferredSetCode: '',
 };
 
 function normalizeTone(tone: string | undefined): StorageTone {
@@ -152,6 +156,8 @@ function migrateV1Settings(raw: unknown): StorageSettings | null {
         minPrice: Math.max(0, midMax),
       },
     ],
+    includeAllPrintings: true,
+    preferredSetCode: '',
   };
 }
 
@@ -162,6 +168,8 @@ export function normalizeStorageSettings(settings: StorageSettings): StorageSett
     fallbackLabel: settings.fallbackLabel?.trim() || DEFAULT_STORAGE_SETTINGS.fallbackLabel,
     fallbackTone: normalizeTone(settings.fallbackTone),
     rules,
+    includeAllPrintings: settings.includeAllPrintings !== false,
+    preferredSetCode: settings.preferredSetCode?.trim().toLowerCase() || '',
   };
 }
 

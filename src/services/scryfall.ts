@@ -2,12 +2,21 @@ import type { ScryfallCard, ScryfallSearchResponse } from '../types';
 
 const BASE = 'https://api.scryfall.com';
 
-export async function searchCards(query: string, page = 1): Promise<ScryfallSearchResponse> {
+interface SearchCardOptions {
+  unique?: 'cards' | 'prints';
+}
+
+export async function searchCards(
+  query: string,
+  page = 1,
+  options: SearchCardOptions = {}
+): Promise<ScryfallSearchResponse> {
   const params = new URLSearchParams({
     q: query,
     order: 'released',
     dir: 'desc',
     page: String(page),
+    unique: options.unique ?? 'cards',
   });
   const res = await fetch(`${BASE}/cards/search?${params}`);
   if (!res.ok) {

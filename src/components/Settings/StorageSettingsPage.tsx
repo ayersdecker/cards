@@ -30,6 +30,8 @@ export default function StorageSettingsPage() {
   const [rules, setRules] = useState<StorageRule[]>(settings.rules);
   const [fallbackLabel, setFallbackLabel] = useState(settings.fallbackLabel);
   const [fallbackTone, setFallbackTone] = useState<StorageTone>(settings.fallbackTone);
+  const [includeAllPrintings, setIncludeAllPrintings] = useState(settings.includeAllPrintings);
+  const [preferredSetCode, setPreferredSetCode] = useState(settings.preferredSetCode ?? '');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -102,6 +104,8 @@ export default function StorageSettingsPage() {
       fallbackLabel,
       fallbackTone,
       rules,
+      includeAllPrintings,
+      preferredSetCode,
     });
 
     setError('');
@@ -113,6 +117,8 @@ export default function StorageSettingsPage() {
     setRules(DEFAULT_STORAGE_SETTINGS.rules);
     setFallbackLabel(DEFAULT_STORAGE_SETTINGS.fallbackLabel);
     setFallbackTone(DEFAULT_STORAGE_SETTINGS.fallbackTone);
+    setIncludeAllPrintings(DEFAULT_STORAGE_SETTINGS.includeAllPrintings);
+    setPreferredSetCode(DEFAULT_STORAGE_SETTINGS.preferredSetCode ?? '');
     setError('');
     setMessage('Rule settings reset to defaults.');
   };
@@ -127,6 +133,32 @@ export default function StorageSettingsPage() {
           <button type="button" className="btn btn-outline" onClick={handleAddRule}>Add Rule</button>
           <button type="submit" className="btn btn-primary">Save Rules</button>
           <button type="button" className="btn btn-ghost" onClick={handleReset}>Reset Defaults</button>
+        </div>
+
+        <div className="settings-fallback-card">
+          <h3>Search Preferences</h3>
+          <div className="settings-grid">
+            <label className="settings-field settings-checkbox">
+              <span>Return all printings / variations in search</span>
+              <input
+                type="checkbox"
+                checked={includeAllPrintings}
+                onChange={(e) => setIncludeAllPrintings(e.target.checked)}
+              />
+            </label>
+
+            <label className="settings-field">
+              <span>Preferred Set Code (optional)</span>
+              <input
+                placeholder="M11"
+                value={preferredSetCode}
+                onChange={(e) => setPreferredSetCode(e.target.value.toUpperCase())}
+              />
+            </label>
+          </div>
+          <p className="muted">
+            Preferred set code is used for bulk imports/search when a card name is ambiguous and no set is specified.
+          </p>
         </div>
 
         <div className="settings-rule-list">

@@ -267,6 +267,14 @@ input:focus, textarea:focus, select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.card-thumb-set {
+  padding: 0 0.6rem 0.25rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .card-thumb-price {
   padding: 0 0.6rem 0.5rem;
   font-size: 0.75rem;
@@ -390,6 +398,15 @@ input:focus, textarea:focus, select:focus {
   font-size: 0.82rem;
   color: var(--text-secondary);
   letter-spacing: 0.02em;
+}
+
+.settings-checkbox {
+  justify-content: center;
+}
+
+.settings-checkbox input {
+  width: auto;
+  align-self: flex-start;
 }
 
 .settings-actions {

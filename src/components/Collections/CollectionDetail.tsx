@@ -57,7 +57,9 @@ export default function CollectionDetail() {
     setBulkMessage('');
 
     try {
-      const { resolved, missing } = await resolveBulkCardList(bulkInput);
+      const { resolved, missing } = await resolveBulkCardList(bulkInput, {
+        preferredSetCode: settings.preferredSetCode,
+      });
 
       if (resolved.length === 0) {
         setBulkError(missing.length > 0 ? `No cards were imported. Missing: ${missing.join(', ')}` : 'No valid card entries found.');
