@@ -11,6 +11,29 @@ import {
 import { db } from '../services/firebase';
 import type { Collection, Deck } from '../types';
 
+function sanitizeFirestoreValue(value: unknown): unknown {
+  if (value === undefined) return undefined;
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeFirestoreValue(item))
+      .filter((item) => item !== undefined);
+  }
+
+  if (value && typeof value === 'object') {
+    const next: Record<string, unknown> = {};
+    for (const [key, entryValue] of Object.entries(value as Record<string, unknown>)) {
+      const sanitized = sanitizeFirestoreValue(entryValue);
+      if (sanitized !== undefined) {
+        next[key] = sanitized;
+      }
+    }
+    return next;
+  }
+
+  return value;
+}
+
 export function useCollections(uid: string | null) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +58,8 @@ export function useCollections(uid: string | null) {
   const updateCollection = async (colId: string, data: Partial<Collection>) => {
     if (!uid) return;
     const ref = doc(db, 'users', uid, 'collections', colId);
-    await updateDoc(ref, { ...data, updatedAt: Date.now() });
+    const sanitized = sanitizeFirestoreValue({ ...data, updatedAt: Date.now() }) as Record<string, unknown>;
+    await updateDoc(ref, sanitized);
   };
 
   const deleteCollection = async (colId: string) => {
@@ -64,13 +88,14 @@ export function useDecks(uid: string | null) {
   const createDeck = async (name: string) => {
     if (!uid) return;
     const ref = doc(collection(db, 'users', uid, 'decks'));
-    await setDoc(ref, { name, cards: [], createdAt: Date.now(), updatedAt: Date.now() });
+    await setDoc(ref, { name, isCommander: false, cards: [], createdAt: Date.now(), updatedAt: Date.now() });
   };
 
   const updateDeck = async (deckId: string, data: Partial<Deck>) => {
     if (!uid) return;
     const ref = doc(db, 'users', uid, 'decks', deckId);
-    await updateDoc(ref, { ...data, updatedAt: Date.now() });
+    const sanitized = sanitizeFirestoreValue({ ...data, updatedAt: Date.now() }) as Record<string, unknown>;
+    await updateDoc(ref, sanitized);
   };
 
   const deleteDeck = async (deckId: string) => {

@@ -58,6 +58,7 @@ export default function DecksList() {
               ) : (
                 <>
                   <Link to={`/decks/${deck.id}`} className="list-card-name">{deck.name}</Link>
+                  {deck.isCommander && <div className="list-card-tag">Commander</div>}
                   <div className="list-card-meta">
                     Main: {mainCount} | Side: {sideCount}
                   </div>

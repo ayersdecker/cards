@@ -83,6 +83,7 @@ export interface DeckCard {
 export interface Deck {
   id: string;
   name: string;
+  isCommander?: boolean;
   createdAt: number;
   updatedAt: number;
   cards: DeckCard[];

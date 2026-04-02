@@ -7,6 +7,8 @@ import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportCollection } from '../../services/excel';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { getStorageRec, getStorageTone } from '../../services/storageSettings';
+import type { ScryfallCard } from '../../types';
+import CardDetail from '../Cards/CardDetail';
 
 export default function CollectionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,8 @@ export default function CollectionDetail() {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
   const [refreshError, setRefreshError] = useState('');
+  const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
 
   if (!col) return <div className="page"><p>Collection not found.</p></div>;
 
@@ -152,6 +156,23 @@ export default function CollectionDetail() {
     }
   };
 
+  const openCardDetail = async (scryfallId: string) => {
+    setRefreshError('');
+    setDetailLoadingId(scryfallId);
+    try {
+      const card = await getCardById(scryfallId);
+      if (!card) {
+        setRefreshError('Card details are unavailable for this entry.');
+        return;
+      }
+      setSelectedCard(card);
+    } catch (error: unknown) {
+      setRefreshError(error instanceof Error ? error.message : 'Failed to load card details');
+    } finally {
+      setDetailLoadingId(null);
+    }
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -210,10 +231,26 @@ export default function CollectionDetail() {
               <tr key={c.scryfallId}>
                 <td data-label="Card">
                   {c.imageUri && (
-                    <img src={c.imageUri} alt={c.name} className="table-card-img" />
+                    <button
+                      type="button"
+                      className="table-card-link"
+                      onClick={() => void openCardDetail(c.scryfallId)}
+                      disabled={detailLoadingId === c.scryfallId}
+                    >
+                      <img src={c.imageUri} alt={c.name} className="table-card-img" />
+                    </button>
                   )}
                 </td>
-                <td data-label="Name">{c.name}</td>
+                <td data-label="Name">
+                  <button
+                    type="button"
+                    className="table-card-link table-card-name-link"
+                    onClick={() => void openCardDetail(c.scryfallId)}
+                    disabled={detailLoadingId === c.scryfallId}
+                  >
+                    {detailLoadingId === c.scryfallId ? 'Loading…' : c.name}
+                  </button>
+                </td>
                 <td data-label="Set">{c.set_name}</td>
                 <td data-label="Color">{mapColors(c.colors)}</td>
                 <td data-label="Price" className="accent-yellow">{c.price ? `$${c.price}` : 'N/A'}</td>
@@ -242,6 +279,9 @@ export default function CollectionDetail() {
           </tbody>
         </table>
       </div>
+      {selectedCard && (
+        <CardDetail card={selectedCard} onClose={() => setSelectedCard(null)} />
+      )}
     </div>
   );
 }

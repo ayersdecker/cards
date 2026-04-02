@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDecks } from '../../hooks/useFirestore';
-import { searchCards, getCardById, getCardImage, getSimilarCards } from '../../services/scryfall';
+import { searchCards, getCardByExactName, getCardById, getCardByName, getCardImage, getSimilarCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
+import { chatWithDeckAssistant, optimizeDeck, type DeckAISuggestion } from '../../services/openai';
 
 const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
   W: { label: 'White', color: '#f9fafb' },
@@ -37,6 +38,12 @@ export default function DeckBuilder() {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
   const [refreshError, setRefreshError] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiReply, setAiReply] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<DeckAISuggestion[]>([]);
+  const [aiError, setAiError] = useState('');
+  const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
 
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
@@ -44,6 +51,7 @@ export default function DeckBuilder() {
   const sideCards = deck.cards.filter((c) => c.isSideboard);
   const mainCount = mainCards.reduce((s, c) => s + c.quantity, 0);
   const sideCount = sideCards.reduce((s, c) => s + c.quantity, 0);
+  const commanderTarget = deck.isCommander ? 100 : 60;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,6 +269,82 @@ export default function DeckBuilder() {
     }
   };
 
+  const setCommanderMode = async (nextValue: boolean) => {
+    await updateDeck(deck.id, { isCommander: nextValue });
+  };
+
+  const deckForAI = {
+    name: deck.name,
+    isCommander: deck.isCommander,
+    cards: deck.cards.map((card) => ({
+      name: card.name,
+      quantity: card.quantity,
+      isSideboard: card.isSideboard,
+      type_line: card.type_line,
+      mana_cost: card.mana_cost,
+      cmc: card.cmc,
+      colors: card.colors,
+    })),
+  };
+
+  const runOptimize = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const result = await optimizeDeck(deckForAI);
+      setAiReply(result.reply);
+      setAiSuggestions(result.suggestions);
+    } catch (error: unknown) {
+      setAiError(error instanceof Error ? error.message : 'AI optimization failed');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const runChat = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const result = await chatWithDeckAssistant(deckForAI, aiPrompt.trim());
+      setAiReply(result.reply);
+      setAiSuggestions(result.suggestions);
+      setAiPrompt('');
+    } catch (error: unknown) {
+      setAiError(error instanceof Error ? error.message : 'AI chat failed');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const quickAddSuggestion = async (suggestion: DeckAISuggestion, index: number) => {
+    const key = `${suggestion.name}-${index}`;
+    setAddingSuggestion(key);
+    setAiError('');
+    try {
+      const preferredSet = settings.preferredSetCode?.trim().toLowerCase();
+      const resolved =
+        (preferredSet ? await getCardByExactName(suggestion.name, preferredSet) : null) ??
+        (await getCardByExactName(suggestion.name)) ??
+        (await getCardByName(suggestion.name));
+
+      if (!resolved) {
+        setAiError(`Could not find "${suggestion.name}" on Scryfall.`);
+        return;
+      }
+
+      const targetSide = suggestion.section === 'side';
+      const quantity = Math.max(1, Math.min(suggestion.quantity ?? 1, deck.isCommander ? 1 : 4));
+      for (let i = 0; i < quantity; i += 1) {
+        await addCard(resolved, targetSide);
+      }
+    } catch (error: unknown) {
+      setAiError(error instanceof Error ? error.message : 'Failed to add suggested card');
+    } finally {
+      setAddingSuggestion(null);
+    }
+  };
+
   // Mana curve: group main cards by cmc
   const curveBuckets: Record<number, number> = {};
   for (const c of mainCards) {
@@ -284,11 +368,20 @@ export default function DeckBuilder() {
       <div className="page-header">
         <Link to="/decks" className="back-link">← Decks</Link>
         <h2 className="page-title">{deck.name}</h2>
+        <label className="deck-mode-toggle">
+          <input
+            type="checkbox"
+            checked={Boolean(deck.isCommander)}
+            onChange={(e) => void setCommanderMode(e.target.checked)}
+          />
+          Commander
+        </label>
         <button className="btn btn-ghost" onClick={handleRefreshPrices} disabled={refreshLoading || deck.cards.length === 0}>
           {refreshLoading ? 'Refreshing…' : 'Refresh Prices'}
         </button>
         <button className="btn btn-primary" onClick={() => void exportDeck(deck, settings)}>Export XLSX</button>
       </div>
+      {deck.isCommander && <p className="muted">Commander mode on. Suggested target: 100 cards total and singleton-friendly adds.</p>}
       {refreshMessage && <div className="success-msg">{refreshMessage}</div>}
       {refreshError && <div className="error-msg">{refreshError}</div>}
 
@@ -300,7 +393,7 @@ export default function DeckBuilder() {
               className={`tab-btn ${activeTab === 'main' ? 'active' : ''}`}
               onClick={() => setActiveTab('main')}
             >
-              Main ({mainCount}/60)
+              Main ({mainCount}/{deck.isCommander ? commanderTarget : 60})
             </button>
             <button
               className={`tab-btn ${activeTab === 'side' ? 'active' : ''}`}
@@ -382,6 +475,49 @@ export default function DeckBuilder() {
 
         {/* Stats sidebar */}
         <div className="deck-stats-col">
+          <div className="stats-card">
+            <h4>AI Deck Assistant</h4>
+            <div className="ai-actions-row">
+              <button className="btn btn-primary" onClick={runOptimize} disabled={aiLoading}>
+                {aiLoading ? 'Thinking…' : deck.isCommander ? 'Optimize Commander' : 'Optimize Deck'}
+              </button>
+            </div>
+            <div className="ai-chat-input-row">
+              <input
+                placeholder="Ask AI (e.g. add more ramp, fix curve, suggest removal)"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+              />
+              <button className="btn btn-outline" onClick={runChat} disabled={aiLoading || !aiPrompt.trim()}>
+                Send
+              </button>
+            </div>
+            {aiError && <div className="error-msg">{aiError}</div>}
+            {aiReply && <p className="muted ai-reply">{aiReply}</p>}
+            {aiSuggestions.length > 0 && (
+              <div className="ai-suggestions">
+                {aiSuggestions.map((suggestion, index) => {
+                  const suggestionKey = `${suggestion.name}-${index}`;
+                  return (
+                    <div key={suggestionKey} className="ai-suggestion-row">
+                      <div>
+                        <strong>{suggestion.name}</strong>
+                        <div className="muted">{suggestion.reason}</div>
+                      </div>
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => void quickAddSuggestion(suggestion, index)}
+                        disabled={addingSuggestion === suggestionKey}
+                      >
+                        {addingSuggestion === suggestionKey ? 'Adding…' : `Quick Add ${suggestion.quantity ?? 1}`}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="stats-card">
             <h4>Mana Curve</h4>
             <div className="mana-curve">
