@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections } from '../../hooks/useFirestore';
+import { getCardById } from '../../services/scryfall';
+import type { ScryfallCard } from '../../types';
+import CardDetail from '../Cards/CardDetail';
 
 type TradeEntry = {
   id: string;
@@ -21,6 +24,9 @@ export default function TradeBinderPage() {
   const { collections, loading } = useCollections(user?.uid ?? null);
   const [searchText, setSearchText] = useState('');
   const [mode, setMode] = useState<'all' | 'dupes' | 'tradeable'>('all');
+  const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState('');
 
   const tradeEntries = useMemo<TradeEntry[]>(() => {
     const byCard: Record<string, TradeEntry> = {};
@@ -97,6 +103,23 @@ export default function TradeBinderPage() {
   const totalValue = tradeEntries.reduce((sum, entry) => sum + entry.ownedValue, 0);
   const duplicateCount = tradeEntries.filter((entry) => entry.isDuplicate).length;
 
+  const openCardDetail = async (scryfallId: string) => {
+    setDetailError('');
+    setDetailLoadingId(scryfallId);
+    try {
+      const card = await getCardById(scryfallId);
+      if (!card) {
+        setDetailError('Card details are unavailable for this entry.');
+        return;
+      }
+      setSelectedCard(card);
+    } catch (error: unknown) {
+      setDetailError(error instanceof Error ? error.message : 'Failed to load card details');
+    } finally {
+      setDetailLoadingId(null);
+    }
+  };
+
   return (
     <div className="page">
       <h2 className="page-title">Trade <span className="accent-cyan">Binder</span></h2>
@@ -141,6 +164,7 @@ export default function TradeBinderPage() {
       </div>
 
       {loading && <p>Loading…</p>}
+      {detailError && <div className="error-msg">{detailError}</div>}
 
       {!loading && filteredEntries.length === 0 && (
         <div className="card-surface trade-empty">
@@ -168,9 +192,27 @@ export default function TradeBinderPage() {
               {filteredEntries.map((entry) => (
                 <tr key={entry.id}>
                   <td data-label="Card">
-                    {entry.imageUri && <img src={entry.imageUri} alt={entry.name} className="table-card-img" />}
+                    {entry.imageUri && (
+                      <button
+                        type="button"
+                        className="table-card-link"
+                        onClick={() => void openCardDetail(entry.id)}
+                        disabled={detailLoadingId === entry.id}
+                      >
+                        <img src={entry.imageUri} alt={entry.name} className="table-card-img" />
+                      </button>
+                    )}
                   </td>
-                  <td data-label="Name">{entry.name}</td>
+                  <td data-label="Name">
+                    <button
+                      type="button"
+                      className="table-card-link table-card-name-link"
+                      onClick={() => void openCardDetail(entry.id)}
+                      disabled={detailLoadingId === entry.id}
+                    >
+                      {detailLoadingId === entry.id ? 'Loading…' : entry.name}
+                    </button>
+                  </td>
                   <td data-label="Set">{entry.set_name}</td>
                   <td data-label="Owned">{entry.ownedQty}</td>
                   <td data-label="Price">${entry.marketPrice.toFixed(2)}</td>
@@ -198,6 +240,10 @@ export default function TradeBinderPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedCard && (
+        <CardDetail card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
     </div>
   );
