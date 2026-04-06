@@ -17,9 +17,9 @@ const MTG_NEWS_LINKS = [
     description: 'Official announcements, set previews, and product updates.',
   },
   {
-    title: 'DailyMTG',
-    url: 'https://magic.wizards.com/en/news/daily-mtg',
-    description: 'Regular articles, strategy pieces, and feature stories.',
+    title: 'Wizards Announcements',
+    url: 'https://magic.wizards.com/en/news/announcements',
+    description: 'Official release notes, bans, and platform updates.',
   },
   {
     title: 'Wizards Event Locator',
@@ -27,9 +27,24 @@ const MTG_NEWS_LINKS = [
     description: 'Find nearby stores and upcoming MTG events.',
   },
   {
-    title: 'MTG on YouTube',
-    url: 'https://www.youtube.com/@magic',
-    description: 'Official videos, reveals, and event coverage.',
+    title: 'Tolarian Community College',
+    url: 'https://www.youtube.com/@TolarianCommunityCollege',
+    description: 'Deck techs, product reviews, and community commentary.',
+  },
+];
+
+const FEATURED_ARTICLES = [
+  {
+    title: 'Magic News Hub',
+    description: 'Track the latest set previews, card image galleries, and official updates.',
+    url: 'https://magic.wizards.com/en/news',
+    image: '/news/featured-article-1.svg',
+  },
+  {
+    title: 'Tolarian Community College Videos',
+    description: 'Weekly MTG content with deck analysis, budget ideas, and product breakdowns.',
+    url: 'https://www.youtube.com/@TolarianCommunityCollege',
+    image: '/news/featured-article-2.svg',
   },
 ];
 
@@ -80,6 +95,25 @@ export default function HomePage() {
       <section className="card-surface home-news-section">
         <h2>Recent MTG News and Resources</h2>
         <p className="muted">Official sources from Wizards of the Coast and Magic channels.</p>
+
+        <div className="home-featured-articles">
+          {FEATURED_ARTICLES.map((item) => (
+            <a
+              key={item.url}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="home-featured-card"
+            >
+              <img src={item.image} alt={item.title} className="home-featured-image" />
+              <div className="home-featured-body">
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+
         <div className="home-news-list">
           {MTG_NEWS_LINKS.map((item) => (
             <a

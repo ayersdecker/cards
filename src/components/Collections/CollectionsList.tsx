@@ -23,6 +23,13 @@ export default function CollectionsList() {
   const [renameVal, setRenameVal] = useState('');
   const [onlyDecks, setOnlyDecks] = useState(false);
 
+  const resetCreateSetup = () => {
+    setShowCreateSetup(false);
+    setNewName('');
+    setCreateKind('collection');
+    setCreateCommanderDeck(false);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
@@ -35,10 +42,7 @@ export default function CollectionsList() {
       await createCollection(newName.trim());
     }
 
-    setNewName('');
-    setCreateKind('collection');
-    setCreateCommanderDeck(false);
-    setShowCreateSetup(false);
+    resetCreateSetup();
   };
 
   const handleRename = async (id: string, kind: 'collection' | 'deck') => {
@@ -93,10 +97,15 @@ export default function CollectionsList() {
         <button
           type="button"
           className="btn btn-primary"
-          onClick={() => setShowCreateSetup((prev) => !prev)}
+          onClick={() => setShowCreateSetup(true)}
         >
-          {showCreateSetup ? 'Close Setup' : 'Create New'}
+          Create New
         </button>
+        {showCreateSetup && (
+          <button type="button" className="btn btn-danger" onClick={resetCreateSetup}>
+            Cancel
+          </button>
+        )}
       </div>
       {showCreateSetup && (
         <form onSubmit={handleCreate} className="create-form create-setup-panel card-surface">
@@ -129,15 +138,14 @@ export default function CollectionsList() {
         </form>
       )}
       <div className="collections-toolbar">
-        <label className="deck-mode-toggle" htmlFor="collections-only-decks">
-          <input
-            id="collections-only-decks"
-            type="checkbox"
-            checked={onlyDecks}
-            onChange={(event) => setOnlyDecks(event.target.checked)}
-          />
-          Show only decks
-        </label>
+        <button
+          type="button"
+          className={`collections-filter-toggle ${onlyDecks ? 'active' : ''}`}
+          onClick={() => setOnlyDecks((prev) => !prev)}
+          aria-pressed={onlyDecks}
+        >
+          Show Only Decks: {onlyDecks ? 'On' : 'Off'}
+        </button>
       </div>
       {(loading || decksLoading) && <p>Loading…</p>}
       <div className="list-grid">
