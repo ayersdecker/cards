@@ -779,6 +779,16 @@ input:focus, textarea:focus, select:focus {
   gap: 0.4rem;
 }
 
+.settings-rule-summary {
+  margin-top: 0.25rem;
+}
+
+.settings-rule-content {
+  margin-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 0.75rem;
+}
+
 .settings-fallback-card {
   margin-top: 1rem;
   border: 1px solid var(--border);
@@ -817,6 +827,38 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.settings-account-card {
+  margin-top: 1rem;
+}
+
+.settings-account-card h3 {
+  margin-bottom: 0.75rem;
+}
+
+.settings-account-danger {
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 90, 102, 0.35);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  background: rgba(255, 51, 68, 0.06);
+}
+
+.settings-account-danger h4 {
+  margin-bottom: 0.35rem;
+}
+
+.settings-account-delete-row {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.settings-account-delete-row input {
+  min-width: 220px;
+  flex: 1;
 }
 
 /* ===== COLLECTIONS / DECKS LIST ===== */
