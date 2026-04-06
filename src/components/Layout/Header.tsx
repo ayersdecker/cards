@@ -13,11 +13,16 @@ export default function Header() {
   };
 
   const navLinks = [
-    { to: '/', label: 'Search' },
+    { to: '/', label: 'Home' },
+    { to: '/search', label: 'Search' },
     { to: '/collections', label: 'Collections' },
-    { to: '/decks', label: 'Decks' },
     { to: '/recognize', label: 'AI Scan' },
   ];
+
+  const isActive = (to: string) => {
+    if (to === '/') return location.pathname === '/';
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
+  };
 
   return (
     <header className="app-header">
@@ -32,7 +37,7 @@ export default function Header() {
           <Link
             key={l.to}
             to={l.to}
-            className={`nav-link ${location.pathname === l.to ? 'active' : ''}`}
+            className={`nav-link ${isActive(l.to) ? 'active' : ''}`}
           >
             {l.label}
           </Link>

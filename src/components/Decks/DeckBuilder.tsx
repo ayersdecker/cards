@@ -477,7 +477,7 @@ export default function DeckBuilder() {
   return (
     <div className="page">
       <div className="page-header">
-        <Link to="/decks" className="back-link">← Decks</Link>
+        <Link to="/collections" className="back-link">← Collections</Link>
         <h2 className="page-title">{deck.name}</h2>
         <div className="deck-format-toggle" role="group" aria-label="Deck format">
           <button

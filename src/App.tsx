@@ -4,10 +4,10 @@ import { AuthProvider } from './context/AuthContext';
 import { StorageSettingsProvider } from './context/StorageSettingsContext';
 import Layout from './components/Layout/Layout';
 import LoginPage from './components/Auth/LoginPage';
+import HomePage from './components/Home/HomePage';
 import CardSearch from './components/Cards/CardSearch';
 import CollectionsList from './components/Collections/CollectionsList';
 import CollectionDetail from './components/Collections/CollectionDetail';
-import DecksList from './components/Decks/DecksList';
 import DeckBuilder from './components/Decks/DeckBuilder';
 import CardRecognition from './components/CardRecognition/CardRecognition';
 import StorageSettingsPage from './components/Settings/StorageSettingsPage';
@@ -21,11 +21,13 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<Navigate to="/login" replace />} />
             <Route element={<Layout />}>
-              <Route index element={<CardSearch />} />
+              <Route index element={<HomePage />} />
+              <Route path="/search" element={<CardSearch />} />
               <Route path="/collections" element={<CollectionsList />} />
+              <Route path="/collections/deck/:id" element={<DeckBuilder />} />
               <Route path="/collections/:id" element={<CollectionDetail />} />
-              <Route path="/decks" element={<DecksList />} />
-              <Route path="/decks/:id" element={<DeckBuilder />} />
+              <Route path="/decks" element={<Navigate to="/collections" replace />} />
+              <Route path="/decks/:id" element={<Navigate to="/collections" replace />} />
               <Route path="/recognize" element={<CardRecognition />} />
               <Route path="/settings" element={<StorageSettingsPage />} />
             </Route>

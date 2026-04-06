@@ -85,10 +85,17 @@ export function useDecks(uid: string | null) {
     return unsub;
   }, [uid]);
 
-  const createDeck = async (name: string) => {
+  const createDeck = async (name: string, options?: { isCommander?: boolean }) => {
     if (!uid) return;
     const ref = doc(collection(db, 'users', uid, 'decks'));
-    await setDoc(ref, { name, isCommander: false, commanderCardId: null, cards: [], createdAt: Date.now(), updatedAt: Date.now() });
+    await setDoc(ref, {
+      name,
+      isCommander: options?.isCommander ?? false,
+      commanderCardId: null,
+      cards: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   };
 
   const updateDeck = async (deckId: string, data: Partial<Deck>) => {

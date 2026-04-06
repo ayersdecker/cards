@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { searchCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import type { ScryfallCard } from '../../types';
@@ -7,6 +8,7 @@ import { useStorageSettings } from '../../context/StorageSettingsContext';
 
 export default function CardSearch() {
   const { settings } = useStorageSettings();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [cards, setCards] = useState<ScryfallCard[]>([]);
   const [loading, setLoading] = useState(false);
@@ -15,10 +17,30 @@ export default function CardSearch() {
   const [total, setTotal] = useState(0);
   const [bulkInput, setBulkInput] = useState('');
   const [bulkMessage, setBulkMessage] = useState('');
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const popularSearches = [
+    'Lightning Bolt',
+    'Sol Ring',
+    'Counterspell',
+    'Swords to Plowshares',
+    'Rhystic Study',
+    'Dockside Extortionist',
+    'Cyclonic Rift',
+    'Smothering Tithe',
+  ];
+
+  useEffect(() => {
+    const prefill = searchParams.get('q');
+    if (!prefill) return;
+    setQuery(prefill);
+    setHasInteracted(true);
+  }, [searchParams]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    setHasInteracted(true);
     setLoading(true);
     setError('');
     setBulkMessage('');
@@ -39,6 +61,7 @@ export default function CardSearch() {
   const handleBulkSearch = async () => {
     if (!bulkInput.trim()) return;
 
+    setHasInteracted(true);
     setBulkLoading(true);
     setError('');
     setBulkMessage('');
@@ -74,12 +97,37 @@ export default function CardSearch() {
           type="text"
           placeholder="Search cards… e.g. 'Lightning Bolt'"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setHasInteracted(true)}
+          onChange={(e) => {
+            setHasInteracted(true);
+            setQuery(e.target.value);
+          }}
         />
         <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
+      {!hasInteracted && (
+        <section className="popular-searches card-surface">
+          <h3>Popular Searches</h3>
+          <p className="muted">Start with a staple card or archetype favorite.</p>
+          <div className="popular-searches-list">
+            {popularSearches.map((term) => (
+              <button
+                key={term}
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setHasInteracted(true);
+                  setQuery(term);
+                }}
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="bulk-import-card">
         <div className="bulk-import-head">
           <div>

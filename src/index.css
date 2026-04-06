@@ -333,6 +333,89 @@ input:focus, textarea:focus, select:focus {
 .back-link { color: var(--text-secondary); font-size: 0.9rem; }
 .back-link:hover { color: var(--text-primary); }
 
+.card-surface {
+  background: rgba(22, 22, 22, 0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* ===== HOME ===== */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.home-hero {
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.home-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 0.72rem;
+  margin-bottom: 0.45rem;
+}
+
+.home-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  margin-bottom: 0.65rem;
+}
+
+.home-subtitle {
+  color: var(--text-secondary);
+  max-width: 78ch;
+}
+
+.home-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.home-card {
+  padding: 1rem;
+}
+
+.home-card h2 {
+  margin-bottom: 0.5rem;
+}
+
+.home-card p {
+  color: var(--text-secondary);
+}
+
+.home-popular-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.home-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+
+.home-chip:hover {
+  border-color: var(--accent-cyan);
+  text-decoration: none;
+}
+
 /* ===== SEARCH ===== */
 .search-form {
   display: flex;
@@ -342,6 +425,22 @@ input:focus, textarea:focus, select:focus {
 .search-form input { flex: 1; }
 .search-input { font-size: 1rem; }
 .results-count { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+
+.popular-searches {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.popular-searches h3 {
+  margin-bottom: 0.2rem;
+}
+
+.popular-searches-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
 
 /* ===== CARD GRID ===== */
 .card-grid {
@@ -607,8 +706,18 @@ input:focus, textarea:focus, select:focus {
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   max-width: 500px;
+  flex-wrap: wrap;
 }
 .create-form input { flex: 1; }
+
+.create-form select {
+  width: auto;
+  min-width: 145px;
+}
+
+.collections-toolbar {
+  margin-bottom: 1rem;
+}
 
 .list-grid {
   display: grid;
@@ -1076,6 +1185,10 @@ input:focus, textarea:focus, select:focus {
     flex-direction: column;
     align-items: stretch;
     max-width: none;
+  }
+
+  .home-grid {
+    grid-template-columns: 1fr;
   }
 
   .search-form .btn,
