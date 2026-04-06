@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-const BASE_URL = import.meta.env.BASE_URL;
+import { getCardByName } from '../../services/scryfall';
 
 const POPULAR_SEARCHES = [
   'Lightning Bolt',
@@ -38,19 +37,83 @@ const MTG_NEWS_LINKS = [
 const FEATURED_ARTICLES = [
   {
     title: 'Magic News Hub',
-    description: 'Track the latest set previews, card image galleries, and official updates.',
+    description: 'Track set previews, product reveals, and official announcement posts.',
     url: 'https://magic.wizards.com/en/news',
-    image: `${BASE_URL}news/featured-article-1.svg`,
+    cardName: 'Chandra, Torch of Defiance',
   },
   {
     title: 'Tolarian Community College Videos',
-    description: 'Weekly MTG content with deck analysis, budget ideas, and product breakdowns.',
+    description: 'Watch deck analysis, product reviews, and gameplay advice from Prof.',
     url: 'https://www.youtube.com/@TolarianCommunityCollege',
-    image: `${BASE_URL}news/featured-article-2.svg`,
+    cardName: 'Kolaghan\'s Command',
+  },
+  {
+    title: 'Wizards Announcements',
+    description: 'Follow B&R updates, event policy changes, and platform rollout notes.',
+    url: 'https://magic.wizards.com/en/news/announcements',
+    cardName: 'Sorin, Imperious Bloodlord',
   },
 ];
 
+type FeaturedSlide = {
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+};
+
+function getArtCropUrl(card: {
+  image_uris?: { art_crop?: string };
+  card_faces?: Array<{ image_uris?: { art_crop?: string } }>;
+}): string {
+  return card.image_uris?.art_crop ?? card.card_faces?.[0]?.image_uris?.art_crop ?? '';
+}
+
 export default function HomePage() {
+  const [featuredSlides, setFeaturedSlides] = useState<FeaturedSlide[]>([]);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadSlides = async () => {
+      const resolved = await Promise.all(
+        FEATURED_ARTICLES.map(async (item) => {
+          const card = await getCardByName(item.cardName);
+          const image = card ? getArtCropUrl(card) : '';
+          return {
+            title: item.title,
+            description: item.description,
+            url: item.url,
+            image,
+          } as FeaturedSlide;
+        })
+      );
+
+      if (ignore) return;
+      setFeaturedSlides(resolved.filter((slide) => slide.image));
+      setActiveSlide(0);
+    };
+
+    void loadSlides();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (featuredSlides.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % featuredSlides.length);
+    }, 15000);
+
+    return () => window.clearInterval(timer);
+  }, [featuredSlides.length]);
+
+  const currentSlide = featuredSlides[activeSlide] ?? null;
+
   return (
     <div className="page home-page">
       <section className="home-hero card-surface">
@@ -98,23 +161,35 @@ export default function HomePage() {
         <h2>Recent MTG News and Resources</h2>
         <p className="muted">Official sources from Wizards of the Coast and Magic channels.</p>
 
-        <div className="home-featured-articles">
-          {FEATURED_ARTICLES.map((item) => (
+        {currentSlide && (
+          <div className="home-featured-articles">
             <a
-              key={item.url}
-              href={item.url}
+              href={currentSlide.url}
               target="_blank"
               rel="noreferrer"
               className="home-featured-card"
             >
-              <img src={item.image} alt={item.title} className="home-featured-image" />
+              <img
+                key={currentSlide.image}
+                src={currentSlide.image}
+                alt={currentSlide.title}
+                className="home-featured-image"
+              />
               <div className="home-featured-body">
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+                <h3>{currentSlide.title}</h3>
+                <p>{currentSlide.description}</p>
               </div>
             </a>
-          ))}
-        </div>
+            <div className="home-slide-dots" aria-hidden="true">
+              {featuredSlides.map((slide, index) => (
+                <span
+                  key={`${slide.title}-${index}`}
+                  className={`home-slide-dot ${index === activeSlide ? 'active' : ''}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="home-news-list">
           {MTG_NEWS_LINKS.map((item) => (
