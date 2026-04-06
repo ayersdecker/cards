@@ -252,12 +252,21 @@ input[type='checkbox']:focus-visible {
 }
 
 .header-brand a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.34rem;
   font-weight: 700;
   color: var(--text-primary);
   text-decoration: none;
   letter-spacing: -0.02em;
+}
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  box-shadow: 0 0 0 1px var(--border);
 }
 .brand-mtg { color: var(--text-primary); }
 .brand-collection { color: var(--accent-cyan); margin-left: 0.25rem; }
@@ -328,12 +337,23 @@ input[type='checkbox']:focus-visible {
 }
 
 .auth-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 2.15rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
   text-align: center;
   letter-spacing: -0.03em;
+}
+
+.auth-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 .auth-card h2 {

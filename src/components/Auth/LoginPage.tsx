@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`;
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Redtail<span className="accent-cyan">Cards</span></h1>
+        <h1 className="auth-title"><img src={logoSrc} alt="Redtail hawk" className="auth-logo" />Redtail<span className="accent-cyan">Cards</span></h1>
         <h2>Sign In</h2>
         <p>Continue with your Google account.</p>
         {error && <div className="error-msg">{error}</div>}

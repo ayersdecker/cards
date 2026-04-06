@@ -6,6 +6,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`;
 
   const handleLogout = async () => {
     await logout();
@@ -28,6 +29,7 @@ export default function Header() {
     <header className="app-header">
       <div className="header-brand">
         <Link to="/">
+          <img src={logoSrc} alt="Redtail hawk" className="brand-logo" />
           <span className="brand-mtg">Redtail</span>
           <span className="brand-collection accent-cyan">Cards</span>
         </Link>
