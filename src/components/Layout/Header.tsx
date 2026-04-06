@@ -39,7 +39,7 @@ export default function Header() {
           </Link>
         ))}
       </nav>
-      <div className="header-user">
+      <div className="header-controls">
         <div className="header-icon-rail" aria-label="Custom icon slots">
           <button type="button" className="icon-slot" aria-label="Custom icon slot one">
             +
@@ -52,12 +52,12 @@ export default function Header() {
           </button>
         </div>
         {user && (
-          <>
+          <div className="header-user">
             <span className="user-email">{user.email}</span>
             <button onClick={handleLogout} className="btn btn-sm btn-ghost">
               Logout
             </button>
-          </>
+          </div>
         )}
       </div>
     </header>
