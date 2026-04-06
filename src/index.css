@@ -416,6 +416,49 @@ input:focus, textarea:focus, select:focus {
   text-decoration: none;
 }
 
+.home-news-section {
+  padding: 1rem;
+}
+
+.home-news-section h2 {
+  margin-bottom: 0.3rem;
+}
+
+.home-news-list {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.home-news-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: rgba(18, 18, 18, 0.92);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.home-news-link:hover {
+  border-color: var(--accent-cyan);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.home-news-title {
+  font-weight: 700;
+}
+
+.home-news-desc {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+}
+
 /* ===== SEARCH ===== */
 .search-form {
   display: flex;
@@ -709,6 +752,15 @@ input:focus, textarea:focus, select:focus {
   flex-wrap: wrap;
 }
 .create-form input { flex: 1; }
+
+.create-launch-row {
+  margin-bottom: 0.8rem;
+}
+
+.create-setup-panel {
+  max-width: 760px;
+  padding: 0.9rem;
+}
 
 .create-form select {
   width: auto;
@@ -1188,6 +1240,10 @@ input:focus, textarea:focus, select:focus {
   }
 
   .home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-news-list {
     grid-template-columns: 1fr;
   }
 

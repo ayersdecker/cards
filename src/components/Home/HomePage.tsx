@@ -10,6 +10,29 @@ const POPULAR_SEARCHES = [
   'Cyclonic Rift',
 ];
 
+const MTG_NEWS_LINKS = [
+  {
+    title: 'Magic News - Wizards of the Coast',
+    url: 'https://magic.wizards.com/en/news',
+    description: 'Official announcements, set previews, and product updates.',
+  },
+  {
+    title: 'DailyMTG',
+    url: 'https://magic.wizards.com/en/news/daily-mtg',
+    description: 'Regular articles, strategy pieces, and feature stories.',
+  },
+  {
+    title: 'Wizards Event Locator',
+    url: 'https://locator.wizards.com/',
+    description: 'Find nearby stores and upcoming MTG events.',
+  },
+  {
+    title: 'MTG on YouTube',
+    url: 'https://www.youtube.com/@magic',
+    description: 'Official videos, reveals, and event coverage.',
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="page home-page">
@@ -52,6 +75,25 @@ export default function HomePage() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section className="card-surface home-news-section">
+        <h2>Recent MTG News and Resources</h2>
+        <p className="muted">Official sources from Wizards of the Coast and Magic channels.</p>
+        <div className="home-news-list">
+          {MTG_NEWS_LINKS.map((item) => (
+            <a
+              key={item.url}
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="home-news-link"
+            >
+              <span className="home-news-title">{item.title}</span>
+              <span className="home-news-desc">{item.description}</span>
+            </a>
+          ))}
+        </div>
       </section>
     </div>
   );

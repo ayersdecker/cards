@@ -15,6 +15,7 @@ export default function CollectionsList() {
     updateDeck,
   } = useDecks(user?.uid ?? null);
   const [newName, setNewName] = useState('');
+  const [showCreateSetup, setShowCreateSetup] = useState(false);
   const [createKind, setCreateKind] = useState<'collection' | 'deck'>('collection');
   const [createCommanderDeck, setCreateCommanderDeck] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -35,6 +36,9 @@ export default function CollectionsList() {
     }
 
     setNewName('');
+    setCreateKind('collection');
+    setCreateCommanderDeck(false);
+    setShowCreateSetup(false);
   };
 
   const handleRename = async (id: string, kind: 'collection' | 'deck') => {
@@ -85,33 +89,45 @@ export default function CollectionsList() {
   return (
     <div className="page">
       <h2 className="page-title">My <span className="accent-cyan">Collections</span></h2>
-      <form onSubmit={handleCreate} className="create-form">
-        <select
-          value={createKind}
-          onChange={(event) => setCreateKind(event.target.value as 'collection' | 'deck')}
-          aria-label="Select item type"
+      <div className="create-launch-row">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowCreateSetup((prev) => !prev)}
         >
-          <option value="collection">Collection</option>
-          <option value="deck">Deck</option>
-        </select>
-        <input
-          placeholder={createKind === 'deck' ? 'New deck name…' : 'New collection name…'}
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        {createKind === 'deck' && (
-          <label className="deck-mode-toggle" htmlFor="create-commander-toggle">
-            <input
-              id="create-commander-toggle"
-              type="checkbox"
-              checked={createCommanderDeck}
-              onChange={(event) => setCreateCommanderDeck(event.target.checked)}
-            />
-            Commander format
-          </label>
-        )}
-        <button type="submit" className="btn btn-primary">Create</button>
-      </form>
+          {showCreateSetup ? 'Close Setup' : 'Create New'}
+        </button>
+      </div>
+      {showCreateSetup && (
+        <form onSubmit={handleCreate} className="create-form create-setup-panel card-surface">
+          <select
+            value={createKind}
+            onChange={(event) => setCreateKind(event.target.value as 'collection' | 'deck')}
+            aria-label="Select item type"
+          >
+            <option value="collection">Collection</option>
+            <option value="deck">Deck</option>
+          </select>
+          <input
+            placeholder={createKind === 'deck' ? 'New deck name…' : 'New collection name…'}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            autoFocus
+          />
+          {createKind === 'deck' && (
+            <label className="deck-mode-toggle" htmlFor="create-commander-toggle">
+              <input
+                id="create-commander-toggle"
+                type="checkbox"
+                checked={createCommanderDeck}
+                onChange={(event) => setCreateCommanderDeck(event.target.checked)}
+              />
+              Commander format
+            </label>
+          )}
+          <button type="submit" className="btn btn-primary">Create</button>
+        </form>
+      )}
       <div className="collections-toolbar">
         <label className="deck-mode-toggle" htmlFor="collections-only-decks">
           <input
