@@ -40,6 +40,17 @@ export default function Header() {
         ))}
       </nav>
       <div className="header-user">
+        <div className="header-icon-rail" aria-label="Custom icon slots">
+          <button type="button" className="icon-slot" aria-label="Custom icon slot one">
+            +
+          </button>
+          <button type="button" className="icon-slot" aria-label="Custom icon slot two">
+            +
+          </button>
+          <button type="button" className="icon-slot" aria-label="Custom icon slot three">
+            +
+          </button>
+        </div>
         {user && (
           <>
             <span className="user-email">{user.email}</span>

@@ -11,10 +11,17 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      <Header />
-      <main className="app-main">
-        <Outlet />
-      </main>
+      <div className="app-atmosphere" aria-hidden="true">
+        <span className="orb orb-one" />
+        <span className="orb orb-two" />
+        <span className="orb orb-three" />
+      </div>
+      <div className="app-shell">
+        <Header />
+        <main className="app-main reveal-in">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
