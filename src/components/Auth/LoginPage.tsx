@@ -24,7 +24,7 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">MTG<span className="accent-cyan">Collection</span></h1>
+        <h1 className="auth-title">Redtail<span className="accent-cyan">Cards</span></h1>
         <h2>Sign In</h2>
         <p>Continue with your Google account.</p>
         {error && <div className="error-msg">{error}</div>}

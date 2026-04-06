@@ -23,8 +23,8 @@ export default function Header() {
     <header className="app-header">
       <div className="header-brand">
         <Link to="/">
-          <span className="brand-mtg">MTG</span>
-          <span className="brand-collection accent-cyan">Collection</span>
+          <span className="brand-mtg">Redtail</span>
+          <span className="brand-collection accent-cyan">Cards</span>
         </Link>
       </div>
       <nav className="header-nav">
