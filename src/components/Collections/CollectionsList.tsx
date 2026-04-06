@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
@@ -22,6 +22,47 @@ export default function CollectionsList() {
   const [renamingKind, setRenamingKind] = useState<'collection' | 'deck'>('collection');
   const [renameVal, setRenameVal] = useState('');
   const [onlyDecks, setOnlyDecks] = useState(false);
+  const [alertInput, setAlertInput] = useState('');
+  const [alertThreshold, setAlertThreshold] = useState<number | null>(null);
+
+  const alertStorageKey = user ? `redtail-price-alert-${user.uid}` : 'redtail-price-alert-guest';
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(alertStorageKey);
+    if (!saved) {
+      setAlertThreshold(null);
+      setAlertInput('');
+      return;
+    }
+    const parsed = Number(saved);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setAlertThreshold(null);
+      setAlertInput('');
+      return;
+    }
+    setAlertThreshold(parsed);
+    setAlertInput(String(parsed));
+  }, [alertStorageKey]);
+
+  const portfolioValue = useMemo(() => {
+    const collectionValue = collections.reduce((sum, collection) => {
+      return sum + collection.cards.reduce((inner, card) => inner + (parseFloat(card.price ?? '0') || 0) * card.quantity, 0);
+    }, 0);
+
+    const deckValue = decks.reduce((sum, deck) => {
+      return sum + deck.cards.reduce((inner, card) => inner + (parseFloat(card.price ?? '0') || 0) * card.quantity, 0);
+    }, 0);
+
+    return collectionValue + deckValue;
+  }, [collections, decks]);
+
+  const portfolioCardCount = useMemo(() => {
+    const collectionCards = collections.reduce((sum, collection) => sum + collection.cards.reduce((inner, card) => inner + card.quantity, 0), 0);
+    const deckCards = decks.reduce((sum, deck) => sum + deck.cards.reduce((inner, card) => inner + card.quantity, 0), 0);
+    return collectionCards + deckCards;
+  }, [collections, decks]);
+
+  const alertReached = alertThreshold !== null && portfolioValue >= alertThreshold;
 
   const resetCreateSetup = () => {
     setShowCreateSetup(false);
@@ -55,6 +96,27 @@ export default function CollectionsList() {
     }
 
     setRenaming(null);
+  };
+
+  const saveAlertThreshold = () => {
+    const parsed = Number(alertInput);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setAlertThreshold(null);
+      window.localStorage.removeItem(alertStorageKey);
+      setAlertInput('');
+      return;
+    }
+
+    const normalized = Number(parsed.toFixed(2));
+    setAlertThreshold(normalized);
+    setAlertInput(String(normalized));
+    window.localStorage.setItem(alertStorageKey, String(normalized));
+  };
+
+  const clearAlertThreshold = () => {
+    setAlertThreshold(null);
+    setAlertInput('');
+    window.localStorage.removeItem(alertStorageKey);
   };
 
   const items = [
@@ -93,6 +155,39 @@ export default function CollectionsList() {
   return (
     <div className="page">
       <h2 className="page-title">My <span className="accent-cyan">Collections</span></h2>
+      <section className="portfolio-panel card-surface">
+        <div className="portfolio-row">
+          <div>
+            <h3>Portfolio Value</h3>
+            <p className="muted">Collections + decks tracked value</p>
+          </div>
+          <strong className="portfolio-value">${portfolioValue.toFixed(2)}</strong>
+        </div>
+        <div className="portfolio-stats muted">
+          <span>{collections.length} collections</span>
+          <span>{decks.length} decks</span>
+          <span>{portfolioCardCount} total cards</span>
+        </div>
+        <div className="portfolio-alert-row">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Set value alert (USD)"
+            value={alertInput}
+            onChange={(event) => setAlertInput(event.target.value)}
+          />
+          <button type="button" className="btn btn-primary" onClick={saveAlertThreshold}>Set Alert</button>
+          {alertThreshold !== null && (
+            <button type="button" className="btn btn-ghost" onClick={clearAlertThreshold}>Clear</button>
+          )}
+        </div>
+        {alertThreshold !== null && (
+          <p className={`portfolio-alert-msg ${alertReached ? 'reached' : ''}`}>
+            Alert target: ${alertThreshold.toFixed(2)} {alertReached ? 'reached' : 'not reached yet'}
+          </p>
+        )}
+      </section>
       {!showCreateSetup && (
         <div className="create-launch-row">
           <button

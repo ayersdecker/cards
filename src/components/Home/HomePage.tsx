@@ -161,49 +161,51 @@ export default function HomePage() {
         <h2>Recent MTG News and Resources</h2>
         <p className="muted">Official sources from Wizards of the Coast and Magic channels.</p>
 
-        {currentSlide && (
-          <div className="home-featured-articles">
-            <a
-              href={currentSlide.url}
-              target="_blank"
-              rel="noreferrer"
-              className="home-featured-card"
-            >
-              <img
-                key={currentSlide.image}
-                src={currentSlide.image}
-                alt={currentSlide.title}
-                className="home-featured-image"
-              />
-              <div className="home-featured-body">
-                <h3>{currentSlide.title}</h3>
-                <p>{currentSlide.description}</p>
-              </div>
-            </a>
-            <div className="home-slide-dots" aria-hidden="true">
-              {featuredSlides.map((slide, index) => (
-                <span
-                  key={`${slide.title}-${index}`}
-                  className={`home-slide-dot ${index === activeSlide ? 'active' : ''}`}
+        <div className="home-news-content">
+          {currentSlide && (
+            <div className="home-featured-articles">
+              <a
+                href={currentSlide.url}
+                target="_blank"
+                rel="noreferrer"
+                className="home-featured-card"
+              >
+                <img
+                  key={currentSlide.image}
+                  src={currentSlide.image}
+                  alt={currentSlide.title}
+                  className="home-featured-image"
                 />
-              ))}
+                <div className="home-featured-body">
+                  <h3>{currentSlide.title}</h3>
+                  <p>{currentSlide.description}</p>
+                </div>
+              </a>
+              <div className="home-slide-dots" aria-hidden="true">
+                {featuredSlides.map((slide, index) => (
+                  <span
+                    key={`${slide.title}-${index}`}
+                    className={`home-slide-dot ${index === activeSlide ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="home-news-list">
-          {MTG_NEWS_LINKS.map((item) => (
-            <a
-              key={item.url}
-              href={item.url}
-              target="_blank"
-              rel="noreferrer"
-              className="home-news-link"
-            >
-              <span className="home-news-title">{item.title}</span>
-              <span className="home-news-desc">{item.description}</span>
-            </a>
-          ))}
+          <div className="home-news-list">
+            {MTG_NEWS_LINKS.map((item) => (
+              <a
+                key={item.url}
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="home-news-link"
+              >
+                <span className="home-news-title">{item.title}</span>
+                <span className="home-news-desc">{item.description}</span>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
     </div>

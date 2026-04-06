@@ -16,6 +16,7 @@ export default function Header() {
     { to: '/', label: 'Home' },
     { to: '/search', label: 'Search' },
     { to: '/collections', label: 'Collections' },
+    { to: '/trade', label: 'Trade' },
   ];
 
   const isActive = (to: string) => {

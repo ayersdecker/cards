@@ -9,6 +9,7 @@ import CardSearch from './components/Cards/CardSearch';
 import CollectionsList from './components/Collections/CollectionsList';
 import CollectionDetail from './components/Collections/CollectionDetail';
 import DeckBuilder from './components/Decks/DeckBuilder';
+import TradeBinderPage from './components/Trade/TradeBinderPage';
 import StorageSettingsPage from './components/Settings/StorageSettingsPage';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
               <Route index element={<HomePage />} />
               <Route path="/search" element={<CardSearch />} />
               <Route path="/collections" element={<CollectionsList />} />
+              <Route path="/trade" element={<TradeBinderPage />} />
               <Route path="/collections/deck/:id" element={<DeckBuilder />} />
               <Route path="/collections/:id" element={<CollectionDetail />} />
               <Route path="/decks" element={<Navigate to="/collections" replace />} />
