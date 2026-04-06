@@ -17,7 +17,6 @@ export default function Header() {
     { to: '/collections', label: 'Collections' },
     { to: '/decks', label: 'Decks' },
     { to: '/recognize', label: 'AI Scan' },
-    { to: '/settings', label: 'Settings' },
   ];
 
   return (
@@ -40,20 +39,12 @@ export default function Header() {
         ))}
       </nav>
       <div className="header-controls">
-        <div className="header-icon-rail" aria-label="Custom icon slots">
-          <button type="button" className="icon-slot" aria-label="Custom icon slot one">
-            +
-          </button>
-          <button type="button" className="icon-slot" aria-label="Custom icon slot two">
-            +
-          </button>
-          <button type="button" className="icon-slot" aria-label="Custom icon slot three">
-            +
-          </button>
-        </div>
         {user && (
           <div className="header-user">
             <span className="user-email">{user.email}</span>
+            <Link to="/settings" className="btn btn-sm btn-ghost">
+              Settings
+            </Link>
             <button onClick={handleLogout} className="btn btn-sm btn-ghost">
               Logout
             </button>

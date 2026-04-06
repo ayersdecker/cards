@@ -222,19 +222,34 @@ input:focus, textarea:focus, select:focus {
 .brand-mtg { color: var(--text-primary); }
 .brand-collection { color: var(--accent-cyan); margin-left: 0.25rem; }
 
-.header-nav { display: flex; gap: 0.35rem; flex: 1; }
+.header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
+  flex: 1;
+}
 .nav-link {
   color: var(--text-secondary);
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  font-size: 0.86rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0.2rem 0;
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
   text-decoration: none;
 }
-.nav-link:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.08); text-decoration: none; }
-.nav-link.active { color: var(--accent-cyan); background: rgba(78, 203, 255, 0.14); }
+.nav-link:hover { color: var(--text-primary); text-decoration: none; }
+.nav-link.active {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
+  text-decoration-thickness: 2px;
+}
 
 .header-controls {
   display: flex;
@@ -247,32 +262,6 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-}
-
-.header-icon-rail {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding-right: 0.35rem;
-}
-
-.icon-slot {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px dashed #476288;
-  background: rgba(17, 27, 45, 0.9);
-  color: #8ea9d1;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.icon-slot:hover {
-  border-color: var(--accent-magenta);
-  color: var(--accent-magenta);
-  transform: translateY(-1px);
 }
 
 .user-email { color: var(--text-secondary); font-size: 0.82rem; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1035,7 +1024,7 @@ input:focus, textarea:focus, select:focus {
   .app-header {
     min-height: 60px;
     padding: 0.85rem 1rem;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     align-items: center;
     gap: 0.85rem;
     top: 0.5rem;
@@ -1047,31 +1036,26 @@ input:focus, textarea:focus, select:focus {
   }
 
   .header-nav {
-    grid-column: 1 / -1;
+    grid-column: 1;
     width: 100%;
+    justify-content: flex-start;
     overflow-x: auto;
     padding-bottom: 0.1rem;
     scrollbar-width: thin;
+    gap: 1rem;
   }
 
   .header-controls {
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 0.5rem;
     min-width: 0;
     flex-wrap: wrap;
   }
 
-  .header-icon-rail {
-    order: 2;
-    width: auto;
-    justify-content: flex-end;
-    padding-right: 0;
-  }
-
   .header-user {
-    order: 1;
     width: auto;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .user-email {
