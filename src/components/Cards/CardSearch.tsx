@@ -129,6 +129,9 @@ export default function CardSearch() {
           </div>
         </section>
       )}
+      {error && <div className="error-msg">{error}</div>}
+      {total > 0 && <p className="results-count">{total} cards found</p>}
+      <CardGrid cards={cards} />
       <section className="bulk-import-card">
         <div className="bulk-import-head">
           <div>
@@ -152,11 +155,8 @@ export default function CardSearch() {
           rows={6}
         />
       </section>
-      {error && <div className="error-msg">{error}</div>}
       {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
       <CardRecognition embedded />
-      {total > 0 && <p className="results-count">{total} cards found</p>}
-      <CardGrid cards={cards} />
     </div>
   );
 }
