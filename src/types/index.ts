@@ -72,6 +72,7 @@ export interface DeckCard {
   set_name: string;
   price: string | null;
   colors: string[];
+  colorIdentity?: string[];
   imageUri: string;
   quantity: number;
   cmc: number;
@@ -84,6 +85,7 @@ export interface Deck {
   id: string;
   name: string;
   isCommander?: boolean;
+  commanderCardId?: string;
   createdAt: number;
   updatedAt: number;
   cards: DeckCard[];

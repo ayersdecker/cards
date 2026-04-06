@@ -44,6 +44,7 @@ export default function DeckBuilder() {
   const [aiSuggestions, setAiSuggestions] = useState<DeckAISuggestion[]>([]);
   const [aiError, setAiError] = useState('');
   const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
+  const [deckRuleError, setDeckRuleError] = useState('');
 
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
@@ -52,6 +53,21 @@ export default function DeckBuilder() {
   const mainCount = mainCards.reduce((s, c) => s + c.quantity, 0);
   const sideCount = sideCards.reduce((s, c) => s + c.quantity, 0);
   const commanderTarget = deck.isCommander ? 100 : 60;
+  const commanderCard = deck.commanderCardId
+    ? deck.cards.find((card) => card.scryfallId === deck.commanderCardId && !card.isSideboard)
+    : null;
+
+  const normalizeName = (name: string) => name.trim().toLowerCase();
+
+  const getIdentityFromDeckCard = (card: DeckCard): string[] => {
+    const source = card.colorIdentity && card.colorIdentity.length > 0 ? card.colorIdentity : card.colors;
+    return source.map((color) => color.toUpperCase());
+  };
+
+  const getIdentityFromScryfall = (card: ScryfallCard): string[] => {
+    const source = card.color_identity && card.color_identity.length > 0 ? card.color_identity : (card.colors ?? []);
+    return source.map((color) => color.toUpperCase());
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,15 +82,45 @@ export default function DeckBuilder() {
     setSearching(false);
   };
 
-  const addCard = async (card: ScryfallCard, isSideboard = false) => {
+  const addCard = async (card: ScryfallCard, isSideboard = false, quantity = 1) => {
+    setDeckRuleError('');
+
+    const normalizedQuantity = Math.max(1, quantity);
+    const quantityToAdd = deck.isCommander ? 1 : normalizedQuantity;
+
     const existing = deck.cards.find(
       (c) => c.scryfallId === card.id && c.isSideboard === isSideboard
     );
+
+    const duplicateByName = deck.cards.find(
+      (c) => normalizeName(c.name) === normalizeName(card.name) && c.scryfallId !== card.id
+    );
+
+    if (deck.isCommander && duplicateByName) {
+      setDeckRuleError(`Commander decks allow one copy of each card. ${card.name} already exists.`);
+      return false;
+    }
+
+    if (deck.isCommander && commanderCard && card.id !== commanderCard.scryfallId) {
+      const commanderIdentity = getIdentityFromDeckCard(commanderCard);
+      const candidateIdentity = getIdentityFromScryfall(card);
+      const outsideColorIdentity = candidateIdentity.some((color) => !commanderIdentity.includes(color));
+      if (outsideColorIdentity) {
+        setDeckRuleError(`${card.name} is outside your commander's color identity.`);
+        return false;
+      }
+    }
+
     let updatedCards;
     if (existing) {
+      if (deck.isCommander) {
+        setDeckRuleError(`${card.name} is already in this Commander deck.`);
+        return false;
+      }
+
       updatedCards = deck.cards.map((c) =>
         c.scryfallId === card.id && c.isSideboard === isSideboard
-          ? { ...c, quantity: c.quantity + 1 }
+          ? { ...c, quantity: c.quantity + quantityToAdd }
           : c
       );
     } else {
@@ -85,8 +131,9 @@ export default function DeckBuilder() {
         set_name: card.set_name,
         price: card.prices.usd,
         colors: card.colors ?? [],
+        colorIdentity: card.color_identity ?? card.colors ?? [],
         imageUri: getCardImage(card),
-        quantity: 1,
+        quantity: quantityToAdd,
         cmc: card.cmc,
         type_line: card.type_line,
         mana_cost: card.mana_cost,
@@ -95,13 +142,18 @@ export default function DeckBuilder() {
       updatedCards = [...deck.cards, newCard];
     }
     await updateDeck(deck.id, { cards: updatedCards });
+    return true;
   };
 
   const removeCard = async (scryfallId: string, isSideboard: boolean) => {
     const updated = deck.cards.filter(
       (c) => !(c.scryfallId === scryfallId && c.isSideboard === isSideboard)
     );
-    await updateDeck(deck.id, { cards: updated });
+    const patch: Partial<typeof deck> = { cards: updated };
+    if (deck.commanderCardId === scryfallId) {
+      patch.commanderCardId = undefined;
+    }
+    await updateDeck(deck.id, patch);
   };
 
   const changeQty = async (scryfallId: string, isSideboard: boolean, delta: number) => {
@@ -109,6 +161,10 @@ export default function DeckBuilder() {
       (c) => c.scryfallId === scryfallId && c.isSideboard === isSideboard
     );
     if (!card) return;
+    if (deck.isCommander && delta > 0) {
+      setDeckRuleError('Commander decks are singleton. Quantities cannot exceed 1.');
+      return;
+    }
     const newQty = card.quantity + delta;
     if (newQty <= 0) {
       await removeCard(scryfallId, isSideboard);
@@ -140,6 +196,29 @@ export default function DeckBuilder() {
 
   const doHotswap = async (replacement: ScryfallCard) => {
     if (!hotswapCard) return;
+
+    if (deck.isCommander) {
+      const duplicateByName = deck.cards.find(
+        (card) =>
+          normalizeName(card.name) === normalizeName(replacement.name) &&
+          card.scryfallId !== hotswapCard.scryfallId
+      );
+      if (duplicateByName) {
+        setDeckRuleError(`Commander decks allow one copy of each card. ${replacement.name} already exists.`);
+        return;
+      }
+
+      if (commanderCard && hotswapCard.scryfallId !== commanderCard.scryfallId) {
+        const commanderIdentity = getIdentityFromDeckCard(commanderCard);
+        const candidateIdentity = getIdentityFromScryfall(replacement);
+        const outsideColorIdentity = candidateIdentity.some((color) => !commanderIdentity.includes(color));
+        if (outsideColorIdentity) {
+          setDeckRuleError(`${replacement.name} is outside your commander's color identity.`);
+          return;
+        }
+      }
+    }
+
     const updated = deck.cards.map((c) =>
       c.scryfallId === hotswapCard.scryfallId && c.isSideboard === hotswapCard.isSideboard
         ? {
@@ -150,10 +229,12 @@ export default function DeckBuilder() {
             set_name: replacement.set_name,
             price: replacement.prices.usd,
             colors: replacement.colors ?? [],
+            colorIdentity: replacement.color_identity ?? replacement.colors ?? [],
             imageUri: getCardImage(replacement),
             cmc: replacement.cmc,
             type_line: replacement.type_line,
             mana_cost: replacement.mana_cost,
+            quantity: deck.isCommander ? 1 : c.quantity,
           }
         : c
     );
@@ -183,12 +264,31 @@ export default function DeckBuilder() {
       const nextCards = [...deck.cards];
 
       for (const entry of resolved) {
+        const duplicateByName = nextCards.find(
+          (card) => normalizeName(card.name) === normalizeName(entry.card.name)
+        );
+
+        if (deck.isCommander && duplicateByName) {
+          continue;
+        }
+
+        if (deck.isCommander && commanderCard && entry.card.id !== commanderCard.scryfallId) {
+          const commanderIdentity = getIdentityFromDeckCard(commanderCard);
+          const candidateIdentity = getIdentityFromScryfall(entry.card);
+          const outsideColorIdentity = candidateIdentity.some((color) => !commanderIdentity.includes(color));
+          if (outsideColorIdentity) {
+            continue;
+          }
+        }
+
         const existing = nextCards.find(
           (card) => card.scryfallId === entry.card.id && card.isSideboard === targetSideboard
         );
 
         if (existing) {
-          existing.quantity += entry.quantity;
+          if (!deck.isCommander) {
+            existing.quantity += entry.quantity;
+          }
         } else {
           nextCards.push({
             scryfallId: entry.card.id,
@@ -197,8 +297,9 @@ export default function DeckBuilder() {
             set_name: entry.card.set_name,
             price: entry.card.prices.usd,
             colors: entry.card.colors ?? [],
+            colorIdentity: entry.card.color_identity ?? entry.card.colors ?? [],
             imageUri: getCardImage(entry.card),
-            quantity: entry.quantity,
+            quantity: deck.isCommander ? 1 : entry.quantity,
             cmc: entry.card.cmc,
             type_line: entry.card.type_line,
             mana_cost: entry.card.mana_cost,
@@ -248,6 +349,7 @@ export default function DeckBuilder() {
             set_name: latest.set_name,
             price: latest.prices.usd,
             colors: latest.colors ?? [],
+            colorIdentity: latest.color_identity ?? latest.colors ?? [],
             imageUri: getCardImage(latest) || card.imageUri,
             cmc: latest.cmc,
             type_line: latest.type_line,
@@ -270,7 +372,18 @@ export default function DeckBuilder() {
   };
 
   const setCommanderMode = async (nextValue: boolean) => {
-    await updateDeck(deck.id, { isCommander: nextValue });
+    const patch: Partial<typeof deck> = { isCommander: nextValue };
+    if (!nextValue) {
+      patch.commanderCardId = undefined;
+    }
+    await updateDeck(deck.id, patch);
+    setDeckRuleError('');
+  };
+
+  const markAsCommander = async (card: DeckCard) => {
+    if (card.isSideboard) return;
+    await updateDeck(deck.id, { commanderCardId: card.scryfallId, isCommander: true });
+    setDeckRuleError('');
   };
 
   const deckForAI = {
@@ -335,9 +448,7 @@ export default function DeckBuilder() {
 
       const targetSide = suggestion.section === 'side';
       const quantity = Math.max(1, Math.min(suggestion.quantity ?? 1, deck.isCommander ? 1 : 4));
-      for (let i = 0; i < quantity; i += 1) {
-        await addCard(resolved, targetSide);
-      }
+      await addCard(resolved, targetSide, quantity);
     } catch (error: unknown) {
       setAiError(error instanceof Error ? error.message : 'Failed to add suggested card');
     } finally {
@@ -368,20 +479,32 @@ export default function DeckBuilder() {
       <div className="page-header">
         <Link to="/decks" className="back-link">← Decks</Link>
         <h2 className="page-title">{deck.name}</h2>
-        <label className="deck-mode-toggle">
-          <input
-            type="checkbox"
-            checked={Boolean(deck.isCommander)}
-            onChange={(e) => void setCommanderMode(e.target.checked)}
-          />
-          Commander
-        </label>
+        <div className="deck-format-toggle" role="group" aria-label="Deck format">
+          <button
+            type="button"
+            className={`deck-format-btn ${!deck.isCommander ? 'active' : ''}`}
+            onClick={() => void setCommanderMode(false)}
+          >
+            Standard
+          </button>
+          <button
+            type="button"
+            className={`deck-format-btn ${deck.isCommander ? 'active' : ''}`}
+            onClick={() => void setCommanderMode(true)}
+          >
+            Commander
+          </button>
+        </div>
         <button className="btn btn-ghost" onClick={handleRefreshPrices} disabled={refreshLoading || deck.cards.length === 0}>
           {refreshLoading ? 'Refreshing…' : 'Refresh Prices'}
         </button>
         <button className="btn btn-primary" onClick={() => void exportDeck(deck, settings)}>Export XLSX</button>
       </div>
       {deck.isCommander && <p className="muted">Commander mode on. Suggested target: 100 cards total and singleton-friendly adds.</p>}
+      {deck.isCommander && !commanderCard && (
+        <div className="error-msg">Pick one main-deck card as your commander to enforce color identity.</div>
+      )}
+      {deckRuleError && <div className="error-msg">{deckRuleError}</div>}
       {refreshMessage && <div className="success-msg">{refreshMessage}</div>}
       {refreshError && <div className="error-msg">{refreshError}</div>}
 
@@ -409,7 +532,10 @@ export default function DeckBuilder() {
               <div key={`${c.scryfallId}-${c.isSideboard}`} className="deck-card-row">
                 {c.imageUri && <img src={c.imageUri} alt={c.name} className="deck-row-img" />}
                 <div className="deck-row-info">
-                  <span className="deck-row-name">{c.name}</span>
+                  <span className="deck-row-name">
+                    {c.name}
+                    {deck.commanderCardId === c.scryfallId && <span className="commander-badge">Commander</span>}
+                  </span>
                   <span className="deck-row-meta">{c.mana_cost} · {c.type_line}</span>
                 </div>
                 <div className="deck-row-controls">
@@ -417,6 +543,14 @@ export default function DeckBuilder() {
                   <span className="qty-val">{c.quantity}</span>
                   <button className="qty-btn" onClick={() => changeQty(c.scryfallId, c.isSideboard, 1)}>+</button>
                   <button className="btn btn-sm btn-ghost" onClick={() => openHotswap(c)} title="Hotswap">⇄</button>
+                  {deck.isCommander && !c.isSideboard && (
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => void markAsCommander(c)}
+                    >
+                      {deck.commanderCardId === c.scryfallId ? 'Commander' : 'Set Cmdr'}
+                    </button>
+                  )}
                   <button className="btn btn-sm btn-danger" onClick={() => removeCard(c.scryfallId, c.isSideboard)}>✕</button>
                 </div>
               </div>

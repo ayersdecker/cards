@@ -720,6 +720,41 @@ input:focus, textarea:focus, select:focus {
   width: auto;
 }
 
+.deck-format-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.deck-format-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.deck-format-btn.active {
+  background: rgba(0, 255, 255, 0.12);
+  color: var(--accent-cyan);
+}
+
+.deck-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.commander-badge {
+  font-size: 0.7rem;
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-yellow);
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+}
+
 .ai-actions-row {
   margin-bottom: 0.75rem;
 }
@@ -1072,6 +1107,14 @@ input:focus, textarea:focus, select:focus {
 
   .ai-chat-input-row {
     flex-direction: column;
+  }
+
+  .deck-format-toggle {
+    width: 100%;
+  }
+
+  .deck-format-btn {
+    flex: 1;
   }
 
   .ai-suggestion-row {
