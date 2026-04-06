@@ -266,7 +266,6 @@ input[type='checkbox']:focus-visible {
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  box-shadow: 0 0 0 1px var(--border);
 }
 .brand-mtg { color: var(--text-primary); }
 .brand-collection { color: var(--accent-cyan); margin-left: 0.25rem; }
@@ -353,7 +352,6 @@ input[type='checkbox']:focus-visible {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  box-shadow: 0 0 0 1px var(--border);
 }
 
 .auth-card h2 {

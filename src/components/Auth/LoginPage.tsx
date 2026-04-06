@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`;
+  const logoSrc = `${import.meta.env.BASE_URL}logo-hawk.svg`;
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

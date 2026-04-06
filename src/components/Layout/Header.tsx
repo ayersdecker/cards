@@ -6,7 +6,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`;
+  const logoSrc = `${import.meta.env.BASE_URL}logo-hawk.svg`;
 
   const handleLogout = async () => {
     await logout();
