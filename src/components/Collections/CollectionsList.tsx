@@ -93,20 +93,17 @@ export default function CollectionsList() {
   return (
     <div className="page">
       <h2 className="page-title">My <span className="accent-cyan">Collections</span></h2>
-      <div className="create-launch-row">
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowCreateSetup(true)}
-        >
-          Create New
-        </button>
-        {showCreateSetup && (
-          <button type="button" className="btn btn-danger" onClick={resetCreateSetup}>
-            Cancel
+      {!showCreateSetup && (
+        <div className="create-launch-row">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setShowCreateSetup(true)}
+          >
+            Create New
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {showCreateSetup && (
         <form onSubmit={handleCreate} className="create-form create-setup-panel card-surface">
           <select
@@ -134,7 +131,10 @@ export default function CollectionsList() {
               Commander format
             </label>
           )}
-          <button type="submit" className="btn btn-primary">Create</button>
+          <div className="create-setup-actions">
+            <button type="submit" className="btn btn-primary">Create</button>
+            <button type="button" className="btn btn-danger" onClick={resetCreateSetup}>Cancel</button>
+          </div>
         </form>
       )}
       <div className="collections-toolbar">

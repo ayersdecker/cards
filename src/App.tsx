@@ -9,7 +9,6 @@ import CardSearch from './components/Cards/CardSearch';
 import CollectionsList from './components/Collections/CollectionsList';
 import CollectionDetail from './components/Collections/CollectionDetail';
 import DeckBuilder from './components/Decks/DeckBuilder';
-import CardRecognition from './components/CardRecognition/CardRecognition';
 import StorageSettingsPage from './components/Settings/StorageSettingsPage';
 
 export default function App() {
@@ -28,7 +27,7 @@ export default function App() {
               <Route path="/collections/:id" element={<CollectionDetail />} />
               <Route path="/decks" element={<Navigate to="/collections" replace />} />
               <Route path="/decks/:id" element={<Navigate to="/collections" replace />} />
-              <Route path="/recognize" element={<CardRecognition />} />
+              <Route path="/recognize" element={<Navigate to="/search" replace />} />
               <Route path="/settings" element={<StorageSettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

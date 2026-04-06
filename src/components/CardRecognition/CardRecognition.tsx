@@ -6,7 +6,11 @@ import CardDetail from '../Cards/CardDetail';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { getStorageRec } from '../../services/storageSettings';
 
-export default function CardRecognition() {
+type CardRecognitionProps = {
+  embedded?: boolean;
+};
+
+export default function CardRecognition({ embedded = false }: CardRecognitionProps) {
   const { settings } = useStorageSettings();
   const [preview, setPreview] = useState<string | null>(null);
   const [base64, setBase64] = useState<string>('');
@@ -49,9 +53,9 @@ export default function CardRecognition() {
     }
   };
 
-  return (
-    <div className="page">
-      <h2 className="page-title">AI Card <span className="accent-yellow">Scan</span></h2>
+  const content = (
+    <>
+      {!embedded && <h2 className="page-title">AI Card <span className="accent-yellow">Scan</span></h2>}
       <p className="muted">Upload a photo of a Magic card to identify it using AI.</p>
 
       <div className="recognition-area">
@@ -117,6 +121,16 @@ export default function CardRecognition() {
           )}
         </div>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return <section className="bulk-import-card">{content}</section>;
+  }
+
+  return (
+    <div className="page">
+      {content}
     </div>
   );
 }

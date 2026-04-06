@@ -4,6 +4,7 @@ import { searchCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import type { ScryfallCard } from '../../types';
 import CardGrid from './CardGrid';
+import CardRecognition from '../CardRecognition/CardRecognition';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 
 export default function CardSearch() {
@@ -153,6 +154,7 @@ export default function CardSearch() {
       </section>
       {error && <div className="error-msg">{error}</div>}
       {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
+      <CardRecognition embedded />
       {total > 0 && <p className="results-count">{total} cards found</p>}
       <CardGrid cards={cards} />
     </div>

@@ -810,6 +810,11 @@ input:focus, textarea:focus, select:focus {
   padding: 0.9rem;
 }
 
+.create-setup-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
 .create-form select {
   width: auto;
   min-width: 145px;

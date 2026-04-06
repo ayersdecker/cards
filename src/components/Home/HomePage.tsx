@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 const POPULAR_SEARCHES = [
   'Lightning Bolt',
   'Sol Ring',
@@ -38,13 +40,13 @@ const FEATURED_ARTICLES = [
     title: 'Magic News Hub',
     description: 'Track the latest set previews, card image galleries, and official updates.',
     url: 'https://magic.wizards.com/en/news',
-    image: '/news/featured-article-1.svg',
+    image: `${BASE_URL}news/featured-article-1.svg`,
   },
   {
     title: 'Tolarian Community College Videos',
     description: 'Weekly MTG content with deck analysis, budget ideas, and product breakdowns.',
     url: 'https://www.youtube.com/@TolarianCommunityCollege',
-    image: '/news/featured-article-2.svg',
+    image: `${BASE_URL}news/featured-article-2.svg`,
   },
 ];
 
