@@ -95,6 +95,46 @@ input:focus, textarea:focus, select:focus {
   transform: translateY(-1px);
 }
 
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: #141414;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type='checkbox']::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: scale(0);
+  transition: transform 0.14s ease;
+  clip-path: polygon(14% 44%, 0 59%, 41% 100%, 100% 16%, 84% 0, 39% 62%);
+  background: #ffffff;
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan);
+  box-shadow: 0 0 0 2px rgba(255, 51, 68, 0.18);
+}
+
+input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+input[type='checkbox']:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 51, 68, 0.22);
+}
+
 /* ===== MESSAGES ===== */
 .error-msg {
   background: rgba(241, 106, 127, 0.1);
@@ -709,6 +749,10 @@ input:focus, textarea:focus, select:focus {
 .badge-low { background: rgba(255, 90, 102, 0.16); color: var(--accent-magenta); border: 1px solid var(--accent-magenta); }
 .badge-mid { background: rgba(255, 51, 68, 0.16); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
 .badge-high { background: rgba(210, 210, 210, 0.16); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+.badge-ember { background: rgba(255, 130, 78, 0.16); color: #ff9a5a; border: 1px solid #ff9a5a; }
+.badge-slate { background: rgba(160, 170, 190, 0.16); color: #b8c3d9; border: 1px solid #b8c3d9; }
+.badge-lime { background: rgba(110, 210, 120, 0.16); color: #8ff0a2; border: 1px solid #8ff0a2; }
+.badge-violet { background: rgba(195, 120, 255, 0.16); color: #d5a3ff; border: 1px solid #d5a3ff; }
 
 .settings-form {
   background: rgba(18, 18, 18, 0.9);
@@ -948,28 +992,6 @@ input:focus, textarea:focus, select:focus {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.8rem;
-}
-
-.portfolio-alert-row {
-  margin-top: 0.8rem;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.portfolio-alert-row input {
-  max-width: 240px;
-}
-
-.portfolio-alert-msg {
-  margin-top: 0.55rem;
-  color: var(--text-secondary);
-  font-size: 0.88rem;
-}
-
-.portfolio-alert-msg.reached {
-  color: var(--accent-cyan);
-  font-weight: 700;
 }
 
 .trade-summary {

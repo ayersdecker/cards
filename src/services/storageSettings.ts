@@ -1,4 +1,4 @@
-export type StorageTone = 'low' | 'mid' | 'high';
+export type StorageTone = 'low' | 'mid' | 'high' | 'ember' | 'slate' | 'lime' | 'violet';
 
 export interface StorageRule {
   id: string;
@@ -69,7 +69,15 @@ export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
 };
 
 function normalizeTone(tone: string | undefined): StorageTone {
-  if (tone === 'low' || tone === 'mid' || tone === 'high') return tone;
+  if (
+    tone === 'low' ||
+    tone === 'mid' ||
+    tone === 'high' ||
+    tone === 'ember' ||
+    tone === 'slate' ||
+    tone === 'lime' ||
+    tone === 'violet'
+  ) return tone;
   return 'low';
 }
 

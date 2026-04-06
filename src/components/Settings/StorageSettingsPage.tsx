@@ -11,9 +11,15 @@ import {
 
 const TONED_LABELS: Record<StorageTone, string> = {
   low: 'Magenta',
-  mid: 'Cyan',
-  high: 'Yellow',
+  mid: 'Red',
+  high: 'Silver',
+  ember: 'Ember',
+  slate: 'Slate',
+  lime: 'Lime',
+  violet: 'Violet',
 };
+
+const TONE_OPTIONS: StorageTone[] = ['low', 'mid', 'high', 'ember', 'slate', 'lime', 'violet'];
 
 function parseColors(raw: string): string[] {
   return raw
@@ -277,9 +283,9 @@ export default function StorageSettingsPage() {
                     <label className="settings-field">
                       <span>Badge Tone</span>
                       <select value={rule.tone} onChange={(e) => updateRule(rule.id, { tone: e.target.value as StorageTone })}>
-                        <option value="low">{TONED_LABELS.low}</option>
-                        <option value="mid">{TONED_LABELS.mid}</option>
-                        <option value="high">{TONED_LABELS.high}</option>
+                        {TONE_OPTIONS.map((tone) => (
+                          <option key={tone} value={tone}>{TONED_LABELS[tone]}</option>
+                        ))}
                       </select>
                     </label>
 
@@ -375,9 +381,9 @@ export default function StorageSettingsPage() {
             <label className="settings-field">
               <span>Fallback Badge Tone</span>
               <select value={fallbackTone} onChange={(e) => setFallbackTone(e.target.value as StorageTone)}>
-                <option value="low">{TONED_LABELS.low}</option>
-                <option value="mid">{TONED_LABELS.mid}</option>
-                <option value="high">{TONED_LABELS.high}</option>
+                {TONE_OPTIONS.map((tone) => (
+                  <option key={tone} value={tone}>{TONED_LABELS[tone]}</option>
+                ))}
               </select>
             </label>
           </div>
