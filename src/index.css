@@ -23,6 +23,11 @@
   --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+html {
+  background-color: #050505;
+  min-height: 100%;
+}
+
 body {
   font-family: 'Manrope', sans-serif;
   background:
@@ -32,6 +37,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.55;
+  overscroll-behavior-y: none;
 }
 
 #root {

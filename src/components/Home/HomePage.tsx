@@ -32,6 +32,26 @@ const MTG_NEWS_LINKS = [
     url: 'https://www.youtube.com/@TolarianCommunityCollege',
     description: 'Deck techs, product reviews, and community commentary.',
   },
+  {
+    title: 'DailyMTG',
+    url: 'https://magic.wizards.com/en/news/archive',
+    description: 'Archived strategy pieces, set coverage, and feature articles.',
+  },
+  {
+    title: 'MTG Banned and Restricted Announcements',
+    url: 'https://magic.wizards.com/en/news/announcements?search=banned+and+restricted',
+    description: 'Track format health updates and card legality changes.',
+  },
+  {
+    title: 'Command Zone',
+    url: 'https://www.youtube.com/@commandcast',
+    description: 'Commander-focused gameplay, deck upgrades, and format trends.',
+  },
+  {
+    title: 'MTGGoldfish',
+    url: 'https://www.mtggoldfish.com/',
+    description: 'Meta breakdowns, budget decklists, and finance snapshots.',
+  },
 ];
 
 const FEATURED_ARTICLES = [
@@ -52,6 +72,18 @@ const FEATURED_ARTICLES = [
     description: 'Follow B&R updates, event policy changes, and platform rollout notes.',
     url: 'https://magic.wizards.com/en/news/announcements',
     cardName: 'Sorin, Imperious Bloodlord',
+  },
+  {
+    title: 'MTGGoldfish Meta and Deck News',
+    description: 'Browse current metagames, new decklists, and format movement.',
+    url: 'https://www.mtggoldfish.com/metagame/standard',
+    cardName: 'Jace, the Mind Sculptor',
+  },
+  {
+    title: 'Commander Deckbuilding Coverage',
+    description: 'Find commander deck upgrades, staples, and gameplay breakdowns.',
+    url: 'https://www.youtube.com/@commandcast',
+    cardName: 'Atraxa, Praetors\' Voice',
   },
 ];
 
