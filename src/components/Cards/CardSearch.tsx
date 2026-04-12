@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { searchCards } from '../../services/scryfall';
-import { resolveBulkCardList } from '../../services/bulkImport';
-import type { ScryfallCard } from '../../types';
+import { resolveBulkCardList, type ResolvedListEntry } from '../../services/bulkImport';
+import type { CollectionCard, ScryfallCard } from '../../types';
 import CardGrid from './CardGrid';
 import CardRecognition from '../CardRecognition/CardRecognition';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
+import { useAuth } from '../../context/AuthContext';
+import { useCollections } from '../../hooks/useFirestore';
 
 export default function CardSearch() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { settings } = useStorageSettings();
+  const { collections, createCollection, updateCollection } = useCollections(user?.uid ?? null);
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [cards, setCards] = useState<ScryfallCard[]>([]);
@@ -19,6 +24,18 @@ export default function CardSearch() {
   const [bulkInput, setBulkInput] = useState('');
   const [bulkMessage, setBulkMessage] = useState('');
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [bulkResolved, setBulkResolved] = useState<ResolvedListEntry[]>([]);
+  const [bulkMissing, setBulkMissing] = useState<string[]>([]);
+  const [bulkImportMode, setBulkImportMode] = useState<'existing' | 'new'>('existing');
+  const [selectedCollectionId, setSelectedCollectionId] = useState('');
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [addingAll, setAddingAll] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCollectionId && collections.length > 0) {
+      setSelectedCollectionId(collections[0].id);
+    }
+  }, [collections, selectedCollectionId]);
 
   const popularSearches = [
     'Lightning Bolt',
@@ -45,6 +62,8 @@ export default function CardSearch() {
     setLoading(true);
     setError('');
     setBulkMessage('');
+    setBulkResolved([]);
+    setBulkMissing([]);
     try {
       const res = await searchCards(query.trim(), 1, {
         unique: settings.includeAllPrintings ? 'prints' : 'cards',
@@ -75,6 +94,8 @@ export default function CardSearch() {
 
       setCards(uniqueCards);
       setTotal(uniqueCards.length);
+      setBulkResolved(resolved);
+      setBulkMissing(missing);
       setBulkMessage(
         missing.length > 0
           ? `Found ${uniqueCards.length} cards. Missing: ${missing.join(', ')}`
@@ -84,8 +105,97 @@ export default function CardSearch() {
       setError(searchError instanceof Error ? searchError.message : 'Bulk search failed');
       setCards([]);
       setTotal(0);
+      setBulkResolved([]);
+      setBulkMissing([]);
     } finally {
       setBulkLoading(false);
+    }
+  };
+
+  const mergeBulkEntriesIntoCollectionCards = (
+    existingCards: CollectionCard[],
+    entries: ResolvedListEntry[]
+  ): CollectionCard[] => {
+    const nextCards = [...existingCards];
+
+    for (const entry of entries) {
+      const existing = nextCards.find((card) => card.scryfallId === entry.card.id);
+      if (existing) {
+        existing.quantity += entry.quantity;
+        continue;
+      }
+
+      nextCards.push({
+        scryfallId: entry.card.id,
+        name: entry.card.name,
+        set: entry.card.set,
+        set_name: entry.card.set_name,
+        price: entry.card.prices.usd,
+        colors: entry.card.colors ?? [],
+        imageUri: entry.card.image_uris?.normal ?? entry.card.card_faces?.[0]?.image_uris?.normal ?? '',
+        addedAt: Date.now(),
+        quantity: entry.quantity,
+        cmc: entry.card.cmc,
+        type_line: entry.card.type_line,
+        mana_cost: entry.card.mana_cost,
+      });
+    }
+
+    return nextCards;
+  };
+
+  const handleAddAllToCollection = async () => {
+    if (!user) {
+      setError('Sign in to add bulk cards to a collection.');
+      return;
+    }
+
+    if (bulkResolved.length === 0) {
+      setError('Run bulk search first so there are cards to add.');
+      return;
+    }
+
+    setAddingAll(true);
+    setError('');
+
+    try {
+      if (bulkImportMode === 'new') {
+        const name = newCollectionName.trim();
+        if (!name) {
+          setError('Enter a name for the new collection.');
+          return;
+        }
+
+        const newCollectionId = await createCollection(name);
+        if (!newCollectionId) {
+          throw new Error('Unable to create a new collection.');
+        }
+
+        const newCards = mergeBulkEntriesIntoCollectionCards([], bulkResolved);
+        await updateCollection(newCollectionId, { cards: newCards });
+        setBulkMessage(`Created ${name} and added ${bulkResolved.length} card entries.`);
+        navigate(`/collections/${newCollectionId}`);
+        return;
+      }
+
+      if (!selectedCollectionId) {
+        setError('Select a collection to import into.');
+        return;
+      }
+
+      const target = collections.find((collection) => collection.id === selectedCollectionId);
+      if (!target) {
+        setError('Selected collection is no longer available.');
+        return;
+      }
+
+      const nextCards = mergeBulkEntriesIntoCollectionCards(target.cards, bulkResolved);
+      await updateCollection(target.id, { cards: nextCards });
+      setBulkMessage(`Added ${bulkResolved.length} card entries to ${target.name}.`);
+    } catch (importError: unknown) {
+      setError(importError instanceof Error ? importError.message : 'Unable to add cards to collection.');
+    } finally {
+      setAddingAll(false);
     }
   };
 
@@ -132,7 +242,7 @@ export default function CardSearch() {
       {error && <div className="error-msg">{error}</div>}
       {total > 0 && <p className="results-count">{total} cards found</p>}
       <CardGrid cards={cards} />
-      <section className="bulk-import-card">
+      <section className="bulk-import-card search-bulk-panel">
         <div className="bulk-import-head">
           <div>
             <h3>Bulk Card Search</h3>
@@ -154,6 +264,72 @@ export default function CardSearch() {
           onChange={(event) => setBulkInput(event.target.value)}
           rows={6}
         />
+        <div className="bulk-import-destination">
+          <h4>Send Bulk Results To Collection</h4>
+          <div className="bulk-import-mode-row">
+            <label>
+              <input
+                type="radio"
+                name="bulk-import-mode"
+                checked={bulkImportMode === 'existing'}
+                onChange={() => setBulkImportMode('existing')}
+              />
+              Existing collection
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="bulk-import-mode"
+                checked={bulkImportMode === 'new'}
+                onChange={() => setBulkImportMode('new')}
+              />
+              New collection
+            </label>
+          </div>
+
+          {bulkImportMode === 'existing' ? (
+            <select
+              value={selectedCollectionId}
+              onChange={(event) => setSelectedCollectionId(event.target.value)}
+              disabled={collections.length === 0}
+            >
+              {collections.length === 0 && <option value="">No collections yet</option>}
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>{collection.name}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              placeholder="New collection name"
+              value={newCollectionName}
+              onChange={(event) => setNewCollectionName(event.target.value)}
+            />
+          )}
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleAddAllToCollection}
+            disabled={addingAll || bulkResolved.length === 0 || (!user)}
+          >
+            {addingAll
+              ? 'Adding…'
+              : bulkImportMode === 'new'
+                ? 'Create Collection + Add All'
+                : 'Add All To Collection'}
+          </button>
+
+          {bulkResolved.length > 0 && (
+            <p className="muted">Ready to add {bulkResolved.length} matched entries in one step.</p>
+          )}
+          {bulkMissing.length > 0 && (
+            <p className="muted">Unmatched entries: {bulkMissing.join(', ')}</p>
+          )}
+          {!user && (
+            <p className="muted">Sign in to bulk-add results to collections.</p>
+          )}
+        </div>
       </section>
       {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
       <CardRecognition embedded />

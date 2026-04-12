@@ -528,6 +528,7 @@ input[type='checkbox']:focus-visible {
   object-fit: cover;
   display: block;
   animation: fade-in-soft 0.55s ease;
+  margin-bottom: 0.3rem;
 }
 
 .home-featured-body {
@@ -1353,6 +1354,10 @@ input[type='checkbox']:focus-visible {
   margin-bottom: 1.5rem;
 }
 
+.search-bulk-panel {
+  margin-top: 1rem;
+}
+
 .bulk-import-head {
   display: flex;
   align-items: flex-start;
@@ -1370,6 +1375,38 @@ input[type='checkbox']:focus-visible {
   min-height: 140px;
   resize: vertical;
   font-family: inherit;
+}
+
+.bulk-import-destination {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bulk-import-destination h4 {
+  margin-bottom: 0.1rem;
+}
+
+.bulk-import-mode-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.bulk-import-mode-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.bulk-import-mode-row input[type='radio'] {
+  width: auto;
 }
 
 .table-wrapper { overflow-x: auto; }
@@ -1868,6 +1905,17 @@ input[type='checkbox']:focus-visible {
   }
 
   .bulk-import-head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bulk-import-mode-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .bulk-import-destination .btn {
     width: 100%;
     justify-content: center;
   }

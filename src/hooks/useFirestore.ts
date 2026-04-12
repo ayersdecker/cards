@@ -50,9 +50,10 @@ export function useCollections(uid: string | null) {
   }, [uid]);
 
   const createCollection = async (name: string) => {
-    if (!uid) return;
+    if (!uid) return undefined;
     const ref = doc(collection(db, 'users', uid, 'collections'));
     await setDoc(ref, { name, cards: [], createdAt: Date.now(), updatedAt: Date.now() });
+    return ref.id;
   };
 
   const updateCollection = async (colId: string, data: Partial<Collection>) => {
