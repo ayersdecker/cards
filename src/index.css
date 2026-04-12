@@ -599,6 +599,186 @@ input[type='checkbox']:focus-visible {
   font-size: 0.86rem;
 }
 
+.commander-day-section {
+  position: relative;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.commander-day-section::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 51, 68, 0.55),
+    rgba(255, 140, 0, 0.42),
+    rgba(255, 51, 68, 0.56),
+    rgba(245, 245, 245, 0.28),
+    rgba(255, 51, 68, 0.55)
+  );
+  animation: commander-border-spin 6s linear infinite;
+  z-index: 0;
+}
+
+.commander-day-section::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: rgba(22, 22, 22, 0.95);
+  z-index: 1;
+}
+
+.commander-day-section > * {
+  position: relative;
+  z-index: 2;
+}
+
+.commander-day-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.commander-day-head h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  margin-top: 0.2rem;
+}
+
+.commander-day-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.commander-day-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+  gap: 0.9rem;
+}
+
+.commander-main-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  background: rgba(17, 17, 17, 0.92);
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 0.85rem;
+}
+
+.commander-main-image-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.commander-main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.commander-main-content h3 {
+  font-size: clamp(1.25rem, 2.4vw, 1.8rem);
+}
+
+.commander-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.commander-pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: rgba(20, 20, 20, 0.96);
+}
+
+.commander-main-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.commander-add-existing {
+  margin-top: 0.65rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.commander-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.commander-side-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem;
+  background: rgba(16, 16, 16, 0.94);
+}
+
+.commander-side-block h4 {
+  margin-bottom: 0.45rem;
+}
+
+.commander-side-link {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.commander-guess-form {
+  display: flex;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.commander-guess-form input {
+  flex: 1;
+}
+
+.commander-hints {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.commander-hint {
+  border: 1px dashed rgba(255, 90, 102, 0.46);
+  border-radius: 10px;
+  padding: 0.42rem 0.55rem;
+  color: var(--text-secondary);
+  background: rgba(18, 18, 18, 0.92);
+  font-size: 0.84rem;
+}
+
+@keyframes commander-border-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ===== SEARCH ===== */
 .search-form {
   display: flex;
@@ -1592,6 +1772,26 @@ input[type='checkbox']:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .commander-day-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-main-card {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-main-image-wrap {
+    max-width: 320px;
+  }
+
+  .commander-add-existing {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-guess-form {
+    flex-direction: column;
+  }
+
 
 @keyframes fade-in-soft {
   from {
@@ -1842,6 +2042,13 @@ input[type='checkbox']:focus-visible {
 
   .modal-content {
     padding: 1rem;
+  }
+
+  .commander-day-meta {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 }
 

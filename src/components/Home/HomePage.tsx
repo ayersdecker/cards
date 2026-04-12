@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useDecks } from '../../hooks/useFirestore';
+import { getCommanderByDayOffset, getTopCommanders } from '../../services/commanderOfDay';
 import { getCardByName } from '../../services/scryfall';
+import type { DeckCard, ScryfallCard } from '../../types';
 
 const POPULAR_SEARCHES = [
   'Lightning Bolt',
@@ -102,8 +106,22 @@ function getArtCropUrl(card: {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { decks, createDeck, updateDeck } = useDecks(user?.uid ?? null);
   const [featuredSlides, setFeaturedSlides] = useState<FeaturedSlide[]>([]);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [topCommanders, setTopCommanders] = useState<ScryfallCard[]>([]);
+  const [commanderLoading, setCommanderLoading] = useState(false);
+  const [commanderError, setCommanderError] = useState('');
+  const [selectedCommanderDeckId, setSelectedCommanderDeckId] = useState('');
+  const [deckActionLoading, setDeckActionLoading] = useState(false);
+  const [deckActionMessage, setDeckActionMessage] = useState('');
+  const [deckActionError, setDeckActionError] = useState('');
+  const [guessInput, setGuessInput] = useState('');
+  const [guessLoading, setGuessLoading] = useState(false);
+  const [guessFeedback, setGuessFeedback] = useState('');
+  const [hintLevel, setHintLevel] = useState(1);
 
   useEffect(() => {
     let ignore = false;
@@ -133,6 +151,182 @@ export default function HomePage() {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCommanders = async () => {
+      setCommanderLoading(true);
+      setCommanderError('');
+
+      try {
+        const commanders = await getTopCommanders(300);
+        if (ignore) return;
+        setTopCommanders(commanders);
+      } catch {
+        if (ignore) return;
+        setCommanderError('Could not load the top commander list right now.');
+      } finally {
+        if (!ignore) {
+          setCommanderLoading(false);
+        }
+      }
+    };
+
+    void loadCommanders();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const commanderDecks = decks.filter((deck) => deck.isCommander);
+
+  useEffect(() => {
+    if (!selectedCommanderDeckId && commanderDecks.length > 0) {
+      setSelectedCommanderDeckId(commanderDecks[0].id);
+    }
+  }, [commanderDecks, selectedCommanderDeckId]);
+
+  const todayCommander = getCommanderByDayOffset(topCommanders, 0);
+  const yesterdayCommander = getCommanderByDayOffset(topCommanders, -1);
+  const tomorrowCommander = getCommanderByDayOffset(topCommanders, 1);
+
+  const manaHint = tomorrowCommander?.mana_cost?.trim() || 'Unknown';
+  const colorHint = tomorrowCommander && tomorrowCommander.color_identity.length > 0
+    ? tomorrowCommander.color_identity.join(', ')
+    : 'Colorless';
+  const typeHint = tomorrowCommander?.type_line.split(' — ')[0] ?? 'Legendary';
+
+  const hints = [
+    `Mana Value: ${tomorrowCommander?.cmc ?? '?'}`,
+    `Colors: ${colorHint}`,
+    `Mana Cost: ${manaHint}`,
+    `Card Type: ${typeHint}`,
+  ];
+
+  const getDeckCard = (card: ScryfallCard): DeckCard => ({
+    scryfallId: card.id,
+    name: card.name,
+    set: card.set,
+    set_name: card.set_name,
+    price: card.prices.usd,
+    colors: card.colors ?? [],
+    colorIdentity: card.color_identity ?? card.colors ?? [],
+    imageUri: card.image_uris?.normal || card.card_faces?.[0]?.image_uris?.normal || getArtCropUrl(card),
+    quantity: 1,
+    cmc: card.cmc,
+    type_line: card.type_line,
+    mana_cost: card.mana_cost,
+    isSideboard: false,
+  });
+
+  const handleCreateCommanderDeck = async () => {
+    if (!user) {
+      setDeckActionError('Sign in to create decks from Commander of the Day.');
+      return;
+    }
+
+    if (!todayCommander) return;
+
+    setDeckActionLoading(true);
+    setDeckActionError('');
+    setDeckActionMessage('');
+
+    try {
+      const deckId = await createDeck(`${todayCommander.name} Daily Commander`, { isCommander: true });
+      if (!deckId) {
+        throw new Error('Could not create deck.');
+      }
+
+      await updateDeck(deckId, {
+        commanderCardId: todayCommander.id,
+        cards: [getDeckCard(todayCommander)],
+      });
+
+      setDeckActionMessage('Commander deck created. Opening deck builder...');
+      navigate(`/collections/deck/${deckId}`);
+    } catch (error: unknown) {
+      setDeckActionError(error instanceof Error ? error.message : 'Failed to create commander deck.');
+    } finally {
+      setDeckActionLoading(false);
+    }
+  };
+
+  const handleAddToCommanderDeck = async () => {
+    if (!todayCommander || !selectedCommanderDeckId) return;
+
+    const selectedDeck = commanderDecks.find((deck) => deck.id === selectedCommanderDeckId);
+    if (!selectedDeck) return;
+
+    if (selectedDeck.commanderCardId && selectedDeck.commanderCardId !== todayCommander.id) {
+      setDeckActionError('This deck already has a different commander set.');
+      return;
+    }
+
+    setDeckActionLoading(true);
+    setDeckActionError('');
+    setDeckActionMessage('');
+
+    try {
+      const existingCard = selectedDeck.cards.find(
+        (card) => card.scryfallId === todayCommander.id && !card.isSideboard
+      );
+      const nextCards = existingCard
+        ? selectedDeck.cards
+        : [...selectedDeck.cards, getDeckCard(todayCommander)];
+
+      await updateDeck(selectedDeck.id, {
+        commanderCardId: todayCommander.id,
+        cards: nextCards,
+      });
+      setDeckActionMessage(`Added ${todayCommander.name} to ${selectedDeck.name}.`);
+    } catch {
+      setDeckActionError('Failed to add commander to deck.');
+    } finally {
+      setDeckActionLoading(false);
+    }
+  };
+
+  const handleGuess = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!guessInput.trim() || !tomorrowCommander) return;
+
+    setGuessLoading(true);
+    setGuessFeedback('');
+
+    try {
+      const normalizedGuess = guessInput.trim().toLowerCase();
+      const normalizedTarget = tomorrowCommander.name.trim().toLowerCase();
+
+      if (normalizedGuess === normalizedTarget) {
+        setGuessFeedback('Correct prediction. You guessed tomorrow\'s commander.');
+        return;
+      }
+
+      const guessedCard = await getCardByName(guessInput.trim());
+      if (!guessedCard) {
+        setGuessFeedback('Not quite. Keep using hints and try another commander.');
+        return;
+      }
+
+      const guessedColors = guessedCard.color_identity.join('');
+      const targetColors = tomorrowCommander.color_identity.join('');
+      const sameColors = guessedColors === targetColors;
+      const cmcDelta = Math.abs(Math.round(guessedCard.cmc) - Math.round(tomorrowCommander.cmc));
+      const typeMatch = guessedCard.type_line.split(' — ')[0] === tomorrowCommander.type_line.split(' — ')[0];
+
+      const comparisons = [
+        sameColors ? 'Color identity matches.' : 'Color identity is different.',
+        cmcDelta === 0 ? 'Mana value is exact.' : `Mana value is off by ${cmcDelta}.`,
+        typeMatch ? 'Primary type matches.' : 'Primary type differs.',
+      ];
+
+      setGuessFeedback(`Not tomorrow\'s pick. ${comparisons.join(' ')}`);
+    } finally {
+      setGuessLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (featuredSlides.length <= 1) return;
@@ -187,6 +381,134 @@ export default function HomePage() {
             ))}
           </div>
         </article>
+      </section>
+
+      <section className="card-surface commander-day-section">
+        <div className="commander-day-head">
+          <div>
+            <p className="home-kicker">Shared Daily Event</p>
+            <h2>Commander of the Day</h2>
+            <p className="muted">
+              Pulled from a rotating top 300 commander list and synced by UTC day so everyone sees the same card.
+            </p>
+          </div>
+          <div className="commander-day-meta">
+            <span>Pool Size: {topCommanders.length || '...'}</span>
+            <span>Resets at 00:00 UTC</span>
+          </div>
+        </div>
+
+        {commanderLoading && <p>Loading Commander of the Day…</p>}
+        {commanderError && <p className="error-msg">{commanderError}</p>}
+
+        {!commanderLoading && !commanderError && todayCommander && (
+          <div className="commander-day-grid">
+            <article className="commander-main-card">
+              <div className="commander-main-image-wrap">
+                <img
+                  src={todayCommander.image_uris?.normal ?? todayCommander.card_faces?.[0]?.image_uris?.normal}
+                  alt={todayCommander.name}
+                  className="commander-main-image"
+                />
+              </div>
+              <div className="commander-main-content">
+                <h3>{todayCommander.name}</h3>
+                <p className="muted">{todayCommander.type_line}</p>
+                <div className="commander-pill-row">
+                  <span className="commander-pill">Mana Cost: {todayCommander.mana_cost || 'Unknown'}</span>
+                  <span className="commander-pill">Colors: {todayCommander.color_identity.join(', ') || 'Colorless'}</span>
+                </div>
+                <div className="commander-main-actions">
+                  <Link
+                    to={`/search?q=${encodeURIComponent(todayCommander.name)}`}
+                    className="btn btn-ghost"
+                  >
+                    View Card Details
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => void handleCreateCommanderDeck()}
+                    disabled={deckActionLoading}
+                  >
+                    Create New Deck with Commander
+                  </button>
+                </div>
+                {user && commanderDecks.length > 0 && (
+                  <div className="commander-add-existing">
+                    <select
+                      value={selectedCommanderDeckId}
+                      onChange={(event) => setSelectedCommanderDeckId(event.target.value)}
+                      aria-label="Select commander deck"
+                    >
+                      {commanderDecks.map((deck) => (
+                        <option key={deck.id} value={deck.id}>{deck.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => void handleAddToCommanderDeck()}
+                      disabled={deckActionLoading || !selectedCommanderDeckId}
+                    >
+                      Add to Existing Commander Deck
+                    </button>
+                  </div>
+                )}
+                {!user && (
+                  <p className="muted">Sign in to add today&apos;s commander directly into your decks.</p>
+                )}
+                {deckActionError && <p className="error-msg">{deckActionError}</p>}
+                {deckActionMessage && <p className="success-msg">{deckActionMessage}</p>}
+              </div>
+            </article>
+
+            <aside className="commander-side-panel">
+              <div className="commander-side-block">
+                <h4>Yesterday</h4>
+                {yesterdayCommander ? (
+                  <Link to={`/search?q=${encodeURIComponent(yesterdayCommander.name)}`} className="commander-side-link">
+                    {yesterdayCommander.name}
+                  </Link>
+                ) : (
+                  <p className="muted">No data</p>
+                )}
+              </div>
+
+              <div className="commander-side-block">
+                <h4>Guess Tomorrow&apos;s Commander</h4>
+                <form onSubmit={handleGuess} className="commander-guess-form">
+                  <input
+                    value={guessInput}
+                    onChange={(event) => setGuessInput(event.target.value)}
+                    placeholder="Type a commander name"
+                  />
+                  <button type="submit" className="btn btn-primary" disabled={guessLoading}>
+                    Check Guess
+                  </button>
+                </form>
+
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setHintLevel((level) => Math.min(hints.length, level + 1))}
+                  disabled={hintLevel >= hints.length}
+                >
+                  Reveal Another Hint
+                </button>
+
+                <div className="commander-hints">
+                  {hints.slice(0, hintLevel).map((hint) => (
+                    <p key={hint} className="commander-hint">{hint}</p>
+                  ))}
+                </div>
+
+                {guessFeedback && <p className="success-msg">{guessFeedback}</p>}
+                <p className="muted">Hints help narrow the field without revealing the name directly.</p>
+              </div>
+            </aside>
+          </div>
+        )}
       </section>
 
       <section className="card-surface home-news-section">
