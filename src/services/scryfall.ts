@@ -40,10 +40,15 @@ export async function getCardByExactName(
   const cleanedName = name.trim();
   if (!cleanedName) return null;
 
-  let query = `!"${cleanedName.replace(/"/g, '\\"')}"`;
-  if (setCode?.trim()) {
-    query += ` set:${setCode.trim().toLowerCase()}`;
+  if (!setCode?.trim()) {
+    const params = new URLSearchParams({ exact: cleanedName });
+    const res = await fetch(`${BASE}/cards/named?${params}`);
+    if (!res.ok) return null;
+    return res.json();
   }
+
+  let query = `!"${cleanedName.replace(/"/g, '\\"')}"`;
+  query += ` set:${setCode.trim().toLowerCase()}`;
 
   const params = new URLSearchParams({
     q: query,
@@ -57,6 +62,18 @@ export async function getCardByExactName(
 
   const data = (await res.json()) as ScryfallSearchResponse;
   return data.data[0] ?? null;
+}
+
+export async function getCardAutocomplete(name: string): Promise<string[]> {
+  const query = name.trim();
+  if (!query) return [];
+
+  const params = new URLSearchParams({ q: query });
+  const res = await fetch(`${BASE}/cards/autocomplete?${params}`);
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as { data?: string[] };
+  return data.data ?? [];
 }
 
 export async function getCardById(id: string): Promise<ScryfallCard | null> {

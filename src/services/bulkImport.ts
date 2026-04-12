@@ -1,5 +1,5 @@
 import type { ScryfallCard } from '../types';
-import { getCardByExactName, getCardByName } from './scryfall';
+import { getCardAutocomplete, getCardByExactName, getCardByName } from './scryfall';
 
 export interface ParsedListEntry {
   name: string;
@@ -63,7 +63,63 @@ function parseSetCode(line: string): { name: string; setCode?: string } {
 }
 
 function normalizeName(value: string): string {
-  return value.trim().toLowerCase();
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenize(value: string): string[] {
+  const normalized = normalizeName(value);
+  if (!normalized) return [];
+  return normalized.split(' ');
+}
+
+function looksLikeReasonableFuzzyMatch(input: string, candidate: string): boolean {
+  const source = normalizeName(input);
+  const target = normalizeName(candidate);
+  if (!source || !target) return false;
+  if (source === target) return true;
+
+  if (target.startsWith(`${source} `) || target.includes(` ${source} `) || target.endsWith(` ${source}`)) {
+    return true;
+  }
+
+  const sourceTokens = tokenize(source);
+  const targetTokens = new Set(tokenize(target));
+  if (sourceTokens.length === 0) return false;
+
+  const matchingTokens = sourceTokens.filter((token) => targetTokens.has(token)).length;
+  return matchingTokens >= Math.max(1, Math.ceil(sourceTokens.length * 0.6));
+}
+
+async function resolveEntryCard(entryName: string, setCode?: string): Promise<ScryfallCard | null> {
+  const suggestions = await getCardAutocomplete(entryName);
+
+  const exactSuggestion = suggestions.find(
+    (suggestion) => normalizeName(suggestion) === normalizeName(entryName)
+  );
+
+  const candidateNames = [exactSuggestion, ...suggestions, entryName]
+    .filter((value): value is string => Boolean(value && value.trim()))
+    .filter((value, index, arr) => arr.findIndex((x) => normalizeName(x) === normalizeName(value)) === index)
+    .slice(0, 4);
+
+  for (const candidate of candidateNames) {
+    const card = await getCardByExactName(candidate, setCode);
+    if (card) return card;
+  }
+
+  const fuzzy = await getCardByName(entryName);
+  if (fuzzy && looksLikeReasonableFuzzyMatch(entryName, fuzzy.name)) {
+    if (!setCode) return fuzzy;
+    const inRequestedSet = await getCardByExactName(fuzzy.name, setCode);
+    return inRequestedSet ?? fuzzy;
+  }
+
+  return null;
 }
 
 export function parseBulkCardList(input: string): ParsedListEntry[] {
@@ -107,17 +163,16 @@ export async function resolveBulkCardList(
 
   for (const entry of parsedEntries) {
     const resolvedSetCode = entry.setCode ?? preferredSetCode;
-    let card = await getCardByExactName(entry.name, resolvedSetCode);
+    let card = await resolveEntryCard(entry.name, resolvedSetCode);
 
-    if (!card && !resolvedSetCode) {
-      const fuzzy = await getCardByName(entry.name);
-      if (fuzzy && normalizeName(fuzzy.name) === normalizeName(entry.name)) {
-        card = fuzzy;
-      }
+    if (!card && resolvedSetCode && !entry.setCode) {
+      // If preferred set has no print, fall back to any print so import still succeeds.
+      card = await resolveEntryCard(entry.name);
     }
 
     if (!card) {
-      missing.push(entry.setCode ? `${entry.name} [${entry.setCode}]` : entry.name);
+      const label = entry.setCode ? `${entry.name} [${entry.setCode}]` : entry.name;
+      missing.push(entry.quantity > 1 ? `${entry.quantity}x ${label}` : label);
       continue;
     }
 

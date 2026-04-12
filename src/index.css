@@ -493,13 +493,14 @@ input[type='checkbox']:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 1rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .home-featured-articles {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-height: 0;
 }
 
 .home-featured-card {
@@ -512,6 +513,7 @@ input[type='checkbox']:focus-visible {
   text-decoration: none;
   color: var(--text-primary);
   transition: transform 0.2s ease, border-color 0.2s ease;
+  min-height: 100%;
 }
 
 .home-featured-card:hover {
@@ -564,6 +566,9 @@ input[type='checkbox']:focus-visible {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.65rem;
+  max-height: 430px;
+  overflow-y: auto;
+  padding-right: 0.2rem;
 }
 
 .home-news-link {
@@ -1766,6 +1771,9 @@ input[type='checkbox']:focus-visible {
 
   .home-news-list {
     grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .home-featured-articles {
