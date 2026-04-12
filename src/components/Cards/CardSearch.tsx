@@ -264,72 +264,70 @@ export default function CardSearch() {
           onChange={(event) => setBulkInput(event.target.value)}
           rows={6}
         />
-        <div className="bulk-import-destination">
-          <h4>Send Bulk Results To Collection</h4>
-          <div className="bulk-import-mode-row">
-            <label>
-              <input
-                type="radio"
-                name="bulk-import-mode"
-                checked={bulkImportMode === 'existing'}
-                onChange={() => setBulkImportMode('existing')}
-              />
-              Existing collection
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="bulk-import-mode"
-                checked={bulkImportMode === 'new'}
-                onChange={() => setBulkImportMode('new')}
-              />
-              New collection
-            </label>
-          </div>
+        {bulkResolved.length > 0 && (
+          <div className="bulk-import-destination">
+            <h4>Send Bulk Results To Collection</h4>
+            <div className="bulk-import-mode-row" role="tablist" aria-label="Bulk import destination type">
+              <button
+                type="button"
+                className={`bulk-mode-btn ${bulkImportMode === 'existing' ? 'active' : ''}`}
+                onClick={() => setBulkImportMode('existing')}
+                aria-pressed={bulkImportMode === 'existing'}
+              >
+                Existing Collection
+              </button>
+              <button
+                type="button"
+                className={`bulk-mode-btn ${bulkImportMode === 'new' ? 'active' : ''}`}
+                onClick={() => setBulkImportMode('new')}
+                aria-pressed={bulkImportMode === 'new'}
+              >
+                New Collection
+              </button>
+            </div>
 
-          {bulkImportMode === 'existing' ? (
-            <select
-              value={selectedCollectionId}
-              onChange={(event) => setSelectedCollectionId(event.target.value)}
-              disabled={collections.length === 0}
+            {bulkImportMode === 'existing' ? (
+              <select
+                value={selectedCollectionId}
+                onChange={(event) => setSelectedCollectionId(event.target.value)}
+                disabled={collections.length === 0}
+              >
+                {collections.length === 0 && <option value="">No collections yet</option>}
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>{collection.name}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                placeholder="New collection name"
+                value={newCollectionName}
+                onChange={(event) => setNewCollectionName(event.target.value)}
+              />
+            )}
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleAddAllToCollection}
+              disabled={addingAll || !user}
             >
-              {collections.length === 0 && <option value="">No collections yet</option>}
-              {collections.map((collection) => (
-                <option key={collection.id} value={collection.id}>{collection.name}</option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="text"
-              placeholder="New collection name"
-              value={newCollectionName}
-              onChange={(event) => setNewCollectionName(event.target.value)}
-            />
-          )}
+              {addingAll
+                ? 'Adding…'
+                : bulkImportMode === 'new'
+                  ? 'Create Collection + Add All'
+                  : 'Add All To Collection'}
+            </button>
 
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={handleAddAllToCollection}
-            disabled={addingAll || bulkResolved.length === 0 || (!user)}
-          >
-            {addingAll
-              ? 'Adding…'
-              : bulkImportMode === 'new'
-                ? 'Create Collection + Add All'
-                : 'Add All To Collection'}
-          </button>
-
-          {bulkResolved.length > 0 && (
             <p className="muted">Ready to add {bulkResolved.length} matched entries in one step.</p>
-          )}
-          {bulkMissing.length > 0 && (
-            <p className="muted">Unmatched entries: {bulkMissing.join(', ')}</p>
-          )}
-          {!user && (
-            <p className="muted">Sign in to bulk-add results to collections.</p>
-          )}
-        </div>
+            {!user && (
+              <p className="muted">Sign in to bulk-add results to collections.</p>
+            )}
+          </div>
+        )}
+        {bulkMissing.length > 0 && (
+          <p className="muted bulk-missing-list">Unmatched entries: {bulkMissing.join(', ')}</p>
+        )}
       </section>
       {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
       <CardRecognition embedded />

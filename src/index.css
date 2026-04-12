@@ -452,6 +452,47 @@ input[type='checkbox']:focus-visible {
   padding: 1rem;
 }
 
+.home-card-collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-card-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem;
+  cursor: default;
+}
+
+.home-card-summary::-webkit-details-marker {
+  display: none;
+}
+
+.home-card-content {
+  padding: 0 1rem 1rem;
+}
+
+.home-card-chevron {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.home-card-collapsible[open] .home-card-chevron {
+  transform: rotate(45deg);
+}
+
 .home-card h2 {
   margin-bottom: 0.5rem;
 }
@@ -1395,18 +1436,39 @@ input[type='checkbox']:focus-visible {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.9rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(14, 14, 14, 0.96);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.bulk-mode-btn {
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.bulk-import-mode-row label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.bulk-mode-btn.active {
+  background: linear-gradient(126deg, #ff4b5d 0%, #d1182e 72%);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(255, 51, 68, 0.28);
 }
 
-.bulk-import-mode-row input[type='radio'] {
-  width: auto;
+.bulk-mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.bulk-missing-list {
+  margin-top: 0.75rem;
 }
 
 .table-wrapper { overflow-x: auto; }
@@ -1806,6 +1868,18 @@ input[type='checkbox']:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .home-card-summary {
+    cursor: pointer;
+  }
+
+  .home-card-chevron {
+    display: inline-flex;
+  }
+
+  .home-card-collapsible:not([open]) .home-card-content {
+    display: none;
+  }
+
   .home-news-list {
     grid-template-columns: 1fr;
     max-height: none;
@@ -1910,9 +1984,13 @@ input[type='checkbox']:focus-visible {
   }
 
   .bulk-import-mode-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    width: 100%;
+    gap: 0.35rem;
+  }
+
+  .bulk-mode-btn {
+    flex: 1;
+    text-align: center;
   }
 
   .bulk-import-destination .btn {

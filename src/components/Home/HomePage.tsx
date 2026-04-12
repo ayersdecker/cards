@@ -357,30 +357,45 @@ export default function HomePage() {
       </section>
 
       <section className="home-grid">
-        <article className="card-surface home-card">
-          <h2>What is MTG?</h2>
-          <p>
-            MTG is a trading card game where you build a deck and duel opponents using spells,
-            creatures, and strategic resource management.
-          </p>
-        </article>
-
-        <article className="card-surface home-card">
-          <h2>Core Formats</h2>
-          <p>Popular formats include Standard, Commander, Modern, and Pioneer.</p>
-          <p>Commander decks are singleton and built around a legendary commander.</p>
-        </article>
-
-        <article className="card-surface home-card">
-          <h2>Popular Searches</h2>
-          <div className="home-popular-list">
-            {POPULAR_SEARCHES.map((name) => (
-              <Link key={name} to={`/search?q=${encodeURIComponent(name)}`} className="home-chip">
-                {name}
-              </Link>
-            ))}
+        <details className="card-surface home-card home-card-collapsible" open>
+          <summary className="home-card-summary">
+            <h2>What is MTG?</h2>
+            <span className="home-card-chevron" aria-hidden="true">+</span>
+          </summary>
+          <div className="home-card-content">
+            <p>
+              MTG is a trading card game where you build a deck and duel opponents using spells,
+              creatures, and strategic resource management.
+            </p>
           </div>
-        </article>
+        </details>
+
+        <details className="card-surface home-card home-card-collapsible" open>
+          <summary className="home-card-summary">
+            <h2>Core Formats</h2>
+            <span className="home-card-chevron" aria-hidden="true">+</span>
+          </summary>
+          <div className="home-card-content">
+            <p>Popular formats include Standard, Commander, Modern, and Pioneer.</p>
+            <p>Commander decks are singleton and built around a legendary commander.</p>
+          </div>
+        </details>
+
+        <details className="card-surface home-card home-card-collapsible" open>
+          <summary className="home-card-summary">
+            <h2>Popular Searches</h2>
+            <span className="home-card-chevron" aria-hidden="true">+</span>
+          </summary>
+          <div className="home-card-content">
+            <div className="home-popular-list">
+              {POPULAR_SEARCHES.map((name) => (
+                <Link key={name} to={`/search?q=${encodeURIComponent(name)}`} className="home-chip">
+                  {name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </details>
       </section>
 
       <section className="card-surface commander-day-section">
