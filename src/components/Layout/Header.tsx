@@ -17,6 +17,7 @@ export default function Header() {
     { to: '/', label: 'Home' },
     { to: '/search', label: 'Search' },
     { to: '/collections', label: 'Collections' },
+    { to: '/proxies', label: 'Proxies' },
     { to: '/trade', label: 'Trade' },
   ];
 

@@ -43,15 +43,33 @@ export default function CollectionDetail() {
       return;
     }
 
-    const updated = col.cards.map((entry) =>
-      entry.scryfallId === scryfallId ? { ...entry, quantity: nextQuantity } : entry
-    );
+    const updated = col.cards.map((entry) => {
+      if (entry.scryfallId !== scryfallId) return entry;
+      return {
+        ...entry,
+        quantity: nextQuantity,
+        proxyQueuedQuantity: Math.min(entry.proxyQueuedQuantity ?? 0, nextQuantity),
+      };
+    });
+    await updateCollection(col.id, { cards: updated });
+  };
+
+  const setProxyQueuedQuantity = async (scryfallId: string, nextValue: number) => {
+    const updated = col.cards.map((entry) => {
+      if (entry.scryfallId !== scryfallId) return entry;
+      const nextQueued = Math.max(0, Math.min(nextValue, entry.quantity));
+      return {
+        ...entry,
+        proxyQueuedQuantity: nextQueued,
+      };
+    });
     await updateCollection(col.id, { cards: updated });
   };
 
   const totalValue = col.cards
     .reduce((sum, c) => sum + (parseFloat(c.price ?? '0') || 0) * c.quantity, 0)
     .toFixed(2);
+  const queuedProxyCount = col.cards.reduce((sum, card) => sum + (card.proxyQueuedQuantity ?? 0), 0);
 
   const handleBulkImport = async () => {
     if (!bulkInput.trim()) return;
@@ -184,6 +202,7 @@ export default function CollectionDetail() {
         <button className="btn btn-primary" onClick={() => void exportCollection(col, settings)}>
           Export XLSX
         </button>
+        <Link className="btn btn-outline" to={`/proxies/collection/${col.id}`}>Proxy Print ({queuedProxyCount})</Link>
       </div>
       <div className="collection-stats">
         <span>{col.cards.length} unique cards</span>
@@ -222,6 +241,7 @@ export default function CollectionDetail() {
               <th>Color</th>
               <th>Price</th>
               <th>Qty</th>
+              <th>Proxy Queue</th>
               <th>Storage</th>
               <th></th>
             </tr>
@@ -259,6 +279,28 @@ export default function CollectionDetail() {
                     <button className="qty-btn" onClick={() => changeQty(c.scryfallId, -1)} aria-label={`Decrease quantity for ${c.name}`}>−</button>
                     <span className="qty-val">{c.quantity}</span>
                     <button className="qty-btn" onClick={() => changeQty(c.scryfallId, 1)} aria-label={`Increase quantity for ${c.name}`}>+</button>
+                  </div>
+                </td>
+                <td data-label="Proxy Queue">
+                  <div className="proxy-qty-control">
+                    <button
+                      className="qty-btn"
+                      onClick={() => void setProxyQueuedQuantity(c.scryfallId, (c.proxyQueuedQuantity ?? 0) - 1)}
+                      aria-label={`Decrease proxy quantity for ${c.name}`}
+                      disabled={(c.proxyQueuedQuantity ?? 0) === 0}
+                    >
+                      −
+                    </button>
+                    <span className="qty-val">{c.proxyQueuedQuantity ?? 0}</span>
+                    <button
+                      className="qty-btn"
+                      onClick={() => void setProxyQueuedQuantity(c.scryfallId, (c.proxyQueuedQuantity ?? 0) + 1)}
+                      aria-label={`Increase proxy quantity for ${c.name}`}
+                      disabled={(c.proxyQueuedQuantity ?? 0) >= c.quantity}
+                    >
+                      +
+                    </button>
+                    <span className="muted">/ {c.quantity}</span>
                   </div>
                 </td>
                 <td data-label="Storage">

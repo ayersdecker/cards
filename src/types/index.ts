@@ -52,6 +52,7 @@ export interface CollectionCard {
   imageUri: string;
   addedAt: number;
   quantity: number;
+  proxyQueuedQuantity?: number;
   cmc?: number;
   type_line?: string;
   mana_cost?: string;
@@ -79,6 +80,8 @@ export interface DeckCard {
   type_line: string;
   mana_cost?: string;
   isSideboard: boolean;
+  collectedQuantity?: number;
+  proxyQueuedQuantity?: number;
 }
 
 export interface Deck {

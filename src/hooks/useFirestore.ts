@@ -39,7 +39,7 @@ export function useCollections(uid: string | null) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!uid) { setCollections([]); setLoading(false); return; }
+    if (!uid || !db) { setCollections([]); setLoading(false); return; }
     const colRef = collection(db, 'users', uid, 'collections');
     const unsub = onSnapshot(query(colRef), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Collection));
@@ -50,21 +50,21 @@ export function useCollections(uid: string | null) {
   }, [uid]);
 
   const createCollection = async (name: string) => {
-    if (!uid) return undefined;
+    if (!uid || !db) return undefined;
     const ref = doc(collection(db, 'users', uid, 'collections'));
     await setDoc(ref, { name, cards: [], createdAt: Date.now(), updatedAt: Date.now() });
     return ref.id;
   };
 
   const updateCollection = async (colId: string, data: Partial<Collection>) => {
-    if (!uid) return;
+    if (!uid || !db) return;
     const ref = doc(db, 'users', uid, 'collections', colId);
     const sanitized = sanitizeFirestoreValue({ ...data, updatedAt: Date.now() }) as Record<string, unknown>;
     await updateDoc(ref, sanitized);
   };
 
   const deleteCollection = async (colId: string) => {
-    if (!uid) return;
+    if (!uid || !db) return;
     await deleteDoc(doc(db, 'users', uid, 'collections', colId));
   };
 
@@ -76,7 +76,7 @@ export function useDecks(uid: string | null) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!uid) { setDecks([]); setLoading(false); return; }
+    if (!uid || !db) { setDecks([]); setLoading(false); return; }
     const colRef = collection(db, 'users', uid, 'decks');
     const unsub = onSnapshot(query(colRef), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Deck));
@@ -87,7 +87,7 @@ export function useDecks(uid: string | null) {
   }, [uid]);
 
   const createDeck = async (name: string, options?: { isCommander?: boolean }) => {
-    if (!uid) return undefined;
+    if (!uid || !db) return undefined;
     const ref = doc(collection(db, 'users', uid, 'decks'));
     await setDoc(ref, {
       name,
@@ -101,14 +101,14 @@ export function useDecks(uid: string | null) {
   };
 
   const updateDeck = async (deckId: string, data: Partial<Deck>) => {
-    if (!uid) return;
+    if (!uid || !db) return;
     const ref = doc(db, 'users', uid, 'decks', deckId);
     const sanitized = sanitizeFirestoreValue({ ...data, updatedAt: Date.now() }) as Record<string, unknown>;
     await updateDoc(ref, sanitized);
   };
 
   const deleteDeck = async (deckId: string) => {
-    if (!uid) return;
+    if (!uid || !db) return;
     await deleteDoc(doc(db, 'users', uid, 'decks', deckId));
   };
 

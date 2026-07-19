@@ -11,8 +11,16 @@ import CollectionDetail from './components/Collections/CollectionDetail';
 import DeckBuilder from './components/Decks/DeckBuilder';
 import TradeBinderPage from './components/Trade/TradeBinderPage';
 import StorageSettingsPage from './components/Settings/StorageSettingsPage';
+import ProxyHubPage from './components/Proxy/ProxyHubPage';
+import ProxyPrintPage from './components/Proxy/ProxyPrintPage';
+import MissingFirebaseConfigPage from './components/System/MissingFirebaseConfigPage';
+import { firebaseEnvIssue, missingFirebaseEnvVars } from './services/firebase';
 
 export default function App() {
+  if (firebaseEnvIssue) {
+    return <MissingFirebaseConfigPage missingVars={missingFirebaseEnvVars} />;
+  }
+
   return (
     <AuthProvider>
       <StorageSettingsProvider>
@@ -25,6 +33,9 @@ export default function App() {
               <Route path="/search" element={<CardSearch />} />
               <Route path="/collections" element={<CollectionsList />} />
               <Route path="/trade" element={<TradeBinderPage />} />
+              <Route path="/proxies" element={<ProxyHubPage />} />
+              <Route path="/proxies/:sourceType/:id" element={<ProxyPrintPage />} />
+              <Route path="/proxies/deck/:id" element={<ProxyPrintPage />} />
               <Route path="/collections/deck/:id" element={<DeckBuilder />} />
               <Route path="/collections/:id" element={<CollectionDetail />} />
               <Route path="/decks" element={<Navigate to="/collections" replace />} />

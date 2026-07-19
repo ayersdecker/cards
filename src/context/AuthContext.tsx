@@ -6,7 +6,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
-import { auth } from '../services/firebase';
+import { auth, firebaseEnvIssue } from '../services/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const googleProvider = new GoogleAuthProvider();
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -31,10 +36,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!auth) {
+      throw new Error(firebaseEnvIssue ?? 'Firebase Auth is not configured.');
+    }
     await signInWithPopup(auth, googleProvider);
   };
 
   const logout = async () => {
+    if (!auth) return;
     await signOut(auth);
   };
 

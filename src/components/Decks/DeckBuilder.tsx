@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useDecks } from '../../hooks/useFirestore';
+import { useDecks, useCollections } from '../../hooks/useFirestore';
 import { searchCards, getCardByExactName, getCardById, getCardByName, getCardImage, getSimilarCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
@@ -22,6 +22,7 @@ export default function DeckBuilder() {
   const { user } = useAuth();
   const { settings } = useStorageSettings();
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
+  const { collections } = useCollections(user?.uid ?? null);
   const deck = decks.find((d) => d.id === id);
 
   const [searchQ, setSearchQ] = useState('');
@@ -56,6 +57,23 @@ export default function DeckBuilder() {
   const commanderCard = deck.commanderCardId
     ? deck.cards.find((card) => card.scryfallId === deck.commanderCardId && !card.isSideboard)
     : null;
+
+  const collectionQtyById = collections.reduce((acc, collection) => {
+    for (const card of collection.cards) {
+      acc[card.scryfallId] = (acc[card.scryfallId] ?? 0) + card.quantity;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const getCollectionQty = (scryfallId: string) => collectionQtyById[scryfallId] ?? 0;
+
+  const getCheckedQty = (card: DeckCard) => {
+    const checked = card.collectedQuantity ?? 0;
+    return Math.max(0, Math.min(checked, card.quantity));
+  };
+
+  const getOwnedQty = (card: DeckCard) => Math.max(getCollectionQty(card.scryfallId), getCheckedQty(card));
+  const getMissingQty = (card: DeckCard) => Math.max(0, card.quantity - getOwnedQty(card));
 
   const normalizeName = (name: string) => name.trim().toLowerCase();
 
@@ -171,11 +189,46 @@ export default function DeckBuilder() {
     } else {
       const updated = deck.cards.map((c) =>
         c.scryfallId === scryfallId && c.isSideboard === isSideboard
-          ? { ...c, quantity: newQty }
+          ? {
+              ...c,
+              quantity: newQty,
+              collectedQuantity: Math.min(getCheckedQty(c), newQty),
+              proxyQueuedQuantity: Math.min(c.proxyQueuedQuantity ?? 0, Math.max(0, newQty - getOwnedQty(c))),
+            }
           : c
       );
       await updateDeck(deck.id, { cards: updated });
     }
+  };
+
+  const setCollectedQuantity = async (card: DeckCard, nextValue: number) => {
+    const nextCollected = Math.max(0, Math.min(nextValue, card.quantity));
+    const updated = deck.cards.map((entry) => {
+      if (entry.scryfallId !== card.scryfallId || entry.isSideboard !== card.isSideboard) {
+        return entry;
+      }
+
+      const nextOwned = Math.max(getCollectionQty(entry.scryfallId), nextCollected);
+      const nextMissing = Math.max(0, entry.quantity - nextOwned);
+
+      return {
+        ...entry,
+        collectedQuantity: nextCollected,
+        proxyQueuedQuantity: Math.min(entry.proxyQueuedQuantity ?? 0, nextMissing),
+      };
+    });
+
+    await updateDeck(deck.id, { cards: updated });
+  };
+
+  const setProxyQueuedQuantity = async (card: DeckCard, nextValue: number) => {
+    const nextQueued = Math.max(0, Math.min(nextValue, getMissingQty(card)));
+    const updated = deck.cards.map((entry) =>
+      entry.scryfallId === card.scryfallId && entry.isSideboard === card.isSideboard
+        ? { ...entry, proxyQueuedQuantity: nextQueued }
+        : entry
+    );
+    await updateDeck(deck.id, { cards: updated });
   };
 
   const openHotswap = async (card: DeckCard) => {
@@ -473,6 +526,10 @@ export default function DeckBuilder() {
   }
 
   const displayCards = activeTab === 'main' ? mainCards : sideCards;
+  const queuedProxyCount = deck.cards.reduce((sum, card) => sum + (card.proxyQueuedQuantity ?? 0), 0);
+  const queuedProxyRows = deck.cards
+    .filter((card) => (card.proxyQueuedQuantity ?? 0) > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="page">
@@ -499,6 +556,7 @@ export default function DeckBuilder() {
           {refreshLoading ? 'Refreshing…' : 'Refresh Prices'}
         </button>
         <button className="btn btn-primary" onClick={() => void exportDeck(deck, settings)}>Export XLSX</button>
+        <Link className="btn btn-outline" to={`/proxies/deck/${deck.id}`}>Proxy Print ({queuedProxyCount})</Link>
       </div>
       {deck.isCommander && <p className="muted">Commander mode on. Suggested target: 100 cards total and singleton-friendly adds.</p>}
       {deck.isCommander && !commanderCard && (
@@ -528,33 +586,73 @@ export default function DeckBuilder() {
 
           {/* Card list */}
           <div className="deck-card-list">
-            {displayCards.map((c) => (
-              <div key={`${c.scryfallId}-${c.isSideboard}`} className="deck-card-row">
-                {c.imageUri && <img src={c.imageUri} alt={c.name} className="deck-row-img" />}
-                <div className="deck-row-info">
-                  <span className="deck-row-name">
-                    {c.name}
-                    {deck.commanderCardId === c.scryfallId && <span className="commander-badge">Commander</span>}
-                  </span>
-                  <span className="deck-row-meta">{c.mana_cost} · {c.type_line}</span>
+            {displayCards.map((c) => {
+              const collectionQty = getCollectionQty(c.scryfallId);
+              const checkedQty = getCheckedQty(c);
+              const ownedQty = getOwnedQty(c);
+              const missingQty = getMissingQty(c);
+              const proxyQueued = Math.max(0, Math.min(c.proxyQueuedQuantity ?? 0, missingQty));
+
+              return (
+                <div key={`${c.scryfallId}-${c.isSideboard}`} className="deck-card-row">
+                  {c.imageUri && <img src={c.imageUri} alt={c.name} className="deck-row-img" />}
+                  <div className="deck-row-info">
+                    <span className="deck-row-name">
+                      {c.name}
+                      {deck.commanderCardId === c.scryfallId && <span className="commander-badge">Commander</span>}
+                    </span>
+                    <span className="deck-row-meta">{c.mana_cost} · {c.type_line}</span>
+                    <div className="deck-row-collection">
+                      <span className={`proxy-status-pill ${missingQty > 0 ? 'is-missing' : 'is-ready'}`}>
+                        Owned {ownedQty}/{c.quantity}
+                      </span>
+                      <span className="muted">Collection: {collectionQty}</span>
+                      <div className="deck-checkoff-control">
+                        <span className="muted">Check Off</span>
+                        <button className="qty-btn" onClick={() => void setCollectedQuantity(c, checkedQty - 1)}>−</button>
+                        <span className="qty-val">{checkedQty}</span>
+                        <button className="qty-btn" onClick={() => void setCollectedQuantity(c, checkedQty + 1)}>+</button>
+                      </div>
+                      <div className="proxy-qty-control">
+                        <span className="muted">Proxy Queue</span>
+                        <button
+                          className="qty-btn"
+                          onClick={() => void setProxyQueuedQuantity(c, proxyQueued - 1)}
+                          disabled={proxyQueued === 0}
+                        >
+                          −
+                        </button>
+                        <span className="qty-val">{proxyQueued}</span>
+                        <button
+                          className="qty-btn"
+                          onClick={() => void setProxyQueuedQuantity(c, proxyQueued + 1)}
+                          disabled={proxyQueued >= missingQty}
+                        >
+                          +
+                        </button>
+                        <span className="muted">/ {missingQty} missing</span>
+                      </div>
+                      {missingQty === 0 && <span className="muted">Ready to play</span>}
+                    </div>
+                  </div>
+                  <div className="deck-row-controls">
+                    <button className="qty-btn" onClick={() => void changeQty(c.scryfallId, c.isSideboard, -1)}>−</button>
+                    <span className="qty-val">{c.quantity}</span>
+                    <button className="qty-btn" onClick={() => void changeQty(c.scryfallId, c.isSideboard, 1)}>+</button>
+                    <button className="btn btn-sm btn-ghost" onClick={() => void openHotswap(c)} title="Hotswap">⇄</button>
+                    {deck.isCommander && !c.isSideboard && (
+                      <button
+                        className="btn btn-sm btn-outline"
+                        onClick={() => void markAsCommander(c)}
+                      >
+                        {deck.commanderCardId === c.scryfallId ? 'Commander' : 'Set Cmdr'}
+                      </button>
+                    )}
+                    <button className="btn btn-sm btn-danger" onClick={() => void removeCard(c.scryfallId, c.isSideboard)}>✕</button>
+                  </div>
                 </div>
-                <div className="deck-row-controls">
-                  <button className="qty-btn" onClick={() => changeQty(c.scryfallId, c.isSideboard, -1)}>−</button>
-                  <span className="qty-val">{c.quantity}</span>
-                  <button className="qty-btn" onClick={() => changeQty(c.scryfallId, c.isSideboard, 1)}>+</button>
-                  <button className="btn btn-sm btn-ghost" onClick={() => openHotswap(c)} title="Hotswap">⇄</button>
-                  {deck.isCommander && !c.isSideboard && (
-                    <button
-                      className="btn btn-sm btn-outline"
-                      onClick={() => void markAsCommander(c)}
-                    >
-                      {deck.commanderCardId === c.scryfallId ? 'Commander' : 'Set Cmdr'}
-                    </button>
-                  )}
-                  <button className="btn btn-sm btn-danger" onClick={() => removeCard(c.scryfallId, c.isSideboard)}>✕</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Search to add */}
@@ -609,6 +707,25 @@ export default function DeckBuilder() {
 
         {/* Stats sidebar */}
         <div className="deck-stats-col">
+          <div className="stats-card">
+            <h4>Proxy Queue</h4>
+            <div className="proxy-sidebar-head">
+              <span className="muted">Queued cards: {queuedProxyCount}</span>
+              <Link to={`/proxies/deck/${deck.id}`} className="btn btn-sm btn-primary">Print</Link>
+            </div>
+            <div className="proxy-sidebar-list">
+              {queuedProxyRows.map((card) => (
+                <div key={`${card.scryfallId}-${card.isSideboard ? 'side' : 'main'}`} className="proxy-sidebar-row">
+                  <span>{card.name}</span>
+                  <span className="proxy-sidebar-qty">x{card.proxyQueuedQuantity}</span>
+                </div>
+              ))}
+              {queuedProxyRows.length === 0 && (
+                <p className="muted">No cards queued yet. Queue missing cards from the deck list.</p>
+              )}
+            </div>
+          </div>
+
           <div className="stats-card">
             <h4>AI Deck Assistant</h4>
             <div className="ai-actions-row">

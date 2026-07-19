@@ -1522,6 +1522,17 @@ input[type='checkbox']:focus-visible {
   gap: 0.45rem;
 }
 
+.proxy-qty-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.45rem;
+  background: rgba(14, 14, 14, 0.95);
+  min-height: 30px;
+}
+
 /* ===== DECK BUILDER ===== */
 .deck-layout {
   display: grid;
@@ -1571,6 +1582,47 @@ input[type='checkbox']:focus-visible {
 }
 .deck-row-meta { color: var(--text-secondary); font-size: 0.75rem; }
 .deck-row-controls { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+
+.deck-row-collection {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.deck-checkoff-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.45rem;
+  background: rgba(14, 14, 14, 0.95);
+}
+
+.proxy-status-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 0.14rem 0.6rem;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.proxy-status-pill.is-ready {
+  border-color: rgba(220, 220, 220, 0.45);
+  color: var(--accent-yellow);
+  background: rgba(210, 210, 210, 0.08);
+}
+
+.proxy-status-pill.is-missing {
+  border-color: rgba(255, 51, 68, 0.52);
+  color: var(--accent-cyan);
+  background: rgba(255, 51, 68, 0.14);
+}
 .qty-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -1697,6 +1749,220 @@ input[type='checkbox']:focus-visible {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.6rem;
+}
+
+.proxy-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.proxy-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.proxy-sidebar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.6rem;
+  background: rgba(28, 28, 28, 0.92);
+  font-size: 0.86rem;
+}
+
+.proxy-sidebar-qty {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.proxy-queued-pill {
+  display: inline-flex;
+  margin-bottom: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 51, 68, 0.45);
+  background: rgba(255, 51, 68, 0.14);
+  color: var(--accent-cyan);
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.proxy-empty-state {
+  margin-top: 1rem;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.proxy-print-header {
+  margin-bottom: 0.75rem;
+}
+
+.proxy-print-mode-row {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-bottom: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem;
+  background: rgba(14, 14, 14, 0.92);
+}
+
+.proxy-print-mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.proxy-print-mode-btn.active {
+  background: rgba(255, 51, 68, 0.16);
+  color: var(--accent-cyan);
+}
+
+.proxy-print-note {
+  margin-bottom: 0.95rem;
+}
+
+.proxy-print-hero {
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #1b1b1b;
+  background: #0c0c0c;
+  color: #ffffff;
+}
+
+.proxy-print-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0;
+}
+
+.proxy-print-logo {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.proxy-print-source-name {
+  line-height: 1;
+}
+
+.proxy-print-user-email {
+  margin-left: auto;
+  font-size: 0.72rem;
+  opacity: 0.95;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.proxy-cut-hint {
+  margin-bottom: 0.5rem;
+}
+
+.proxy-source-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 0.14rem 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.proxy-print-hero-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.proxy-print-sheet {
+  border: 1px dashed rgba(180, 180, 180, 0.42);
+  border-radius: 10px;
+  padding: 0.5rem;
+  background: rgba(16, 16, 16, 0.95);
+}
+
+.proxy-print-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.35rem;
+}
+
+.proxy-print-tile {
+  border: 1px dotted #7f7f7f;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(18, 18, 18, 0.95);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.proxy-print-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 63 / 88;
+  object-fit: cover;
+}
+
+.proxy-print-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 210px;
+  padding: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.proxy-print-meta {
+  padding: 0.35rem 0.45rem 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  font-size: 0.7rem;
+}
+
+.proxy-print-page.print-mode-super .proxy-print-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.2rem;
+}
+
+.proxy-print-page.print-mode-super .proxy-print-meta {
+  padding: 0.22rem 0.3rem 0.28rem;
+  font-size: 0.62rem;
+}
+
+.proxy-print-page.print-mode-loose .proxy-print-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.95rem;
+}
+
+.proxy-print-page.print-mode-loose .proxy-print-meta {
+  padding: 0.48rem 0.6rem 0.58rem;
+  font-size: 0.76rem;
+}
+
+.proxy-print-page.print-mode-loose .proxy-print-tile {
+  border: 2px dotted #bdbdbd;
 }
 
 /* ===== DECK STATS ===== */
@@ -2091,6 +2357,16 @@ input[type='checkbox']:focus-visible {
     flex-wrap: wrap;
   }
 
+  .deck-row-collection {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .deck-checkoff-control {
+    width: 100%;
+    justify-content: center;
+  }
+
   .tab-bar {
     overflow-x: auto;
     padding-bottom: 0.25rem;
@@ -2136,6 +2412,38 @@ input[type='checkbox']:focus-visible {
     justify-content: center;
   }
 
+  .proxy-sidebar-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .proxy-sidebar-head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .proxy-print-hero-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .proxy-print-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem;
+  }
+
+  .proxy-print-mode-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .proxy-print-mode-btn {
+    width: 100%;
+    text-align: center;
+  }
+
   .drop-zone {
     width: 100%;
     max-width: 100%;
@@ -2144,6 +2452,160 @@ input[type='checkbox']:focus-visible {
   .recognized-card {
     max-width: none;
     width: 100%;
+  }
+}
+
+@media print {
+  .app-header,
+  .proxy-print-header,
+  .proxy-print-note,
+  .proxy-print-btn,
+  .back-link,
+  .proxy-print-mode-row {
+    display: none !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 3mm;
+  }
+
+  .app-main,
+  .page,
+  .proxy-print-page {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .proxy-print-grid {
+    grid-template-columns: repeat(auto-fill, 63mm);
+    justify-content: flex-start;
+    gap: 1mm;
+  }
+
+  .proxy-print-tile {
+    width: 63mm;
+    border: none;
+    border: 1px dotted #777777;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  .proxy-print-image {
+    width: 63mm;
+    height: 88mm;
+    aspect-ratio: auto;
+  }
+
+  .proxy-print-sheet {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .proxy-print-hero {
+    border: 1px solid #161616;
+    background: #0c0c0c;
+    color: #ffffff;
+    margin-bottom: 2mm;
+    padding: 2mm 2.5mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .proxy-source-pill {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .proxy-print-logo {
+    width: 14px;
+    height: 14px;
+  }
+
+  .proxy-print-user-email {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 8px;
+  }
+
+  .proxy-print-meta {
+    display: none;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-print-grid {
+    grid-template-columns: repeat(auto-fill, 63mm);
+    gap: 0;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-print-hero {
+    border: none;
+    background: #0c0c0c;
+    margin-bottom: 1mm;
+    padding: 1mm 1.4mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-print-hero-row {
+    gap: 1.2mm;
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-source-pill {
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    padding: 0;
+    font-size: 8px;
+    letter-spacing: 0;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-print-logo {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  .proxy-print-page.print-mode-super .proxy-print-user-email {
+    font-size: 7px;
+    max-width: 46mm;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .proxy-print-page.print-mode-loose .proxy-print-grid {
+    grid-template-columns: repeat(auto-fill, 63mm);
+    gap: 6mm;
+  }
+
+  .proxy-print-page.print-mode-loose .proxy-print-sheet {
+    border: none;
+    padding: 0;
+    position: relative;
+  }
+
+  .proxy-print-page.print-mode-loose .proxy-print-tile {
+    border: 1px dotted #6a6a6a;
+  }
+
+  .proxy-print-page.print-mode-loose .proxy-print-sheet::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(88mm + 3mm);
+    border-top: 3px dotted #6f6f6f;
+    pointer-events: none;
+    z-index: 2;
   }
 }
 
