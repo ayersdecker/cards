@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDecks } from '../../hooks/useFirestore';
 import { getCommanderByDayOffset, getTopCommanders } from '../../services/commanderOfDay';
-import { getCardByName } from '../../services/scryfall';
+import { getCardAutocomplete, getCardByName, searchCards } from '../../services/scryfall';
 import type { DeckCard, ScryfallCard } from '../../types';
 
 const POPULAR_SEARCHES = [
@@ -98,6 +98,52 @@ type FeaturedSlide = {
   image: string;
 };
 
+type ReleaseSpotlight = {
+  id: string;
+  name: string;
+  subtitle: string;
+  searchQuery: string;
+  searchPath: string;
+};
+
+const RELEASE_SPOTLIGHTS: ReleaseSpotlight[] = [
+  {
+    id: 'ltr',
+    name: 'Hobbit Drop',
+    subtitle: 'Middle-earth cards getting the most Commander buzz.',
+    searchQuery: 'set:ltr game:paper',
+    searchPath: '/search?q=set%3Altr',
+  },
+  {
+    id: 'ltc',
+    name: 'Middle-earth Commander',
+    subtitle: 'Precon and commander cards players are upgrading around.',
+    searchQuery: 'set:ltc game:paper',
+    searchPath: '/search?q=set%3Altc',
+  },
+  {
+    id: 'marvel',
+    name: 'Marvel Release',
+    subtitle: 'Marvel cards and tie-in legends players are tracking.',
+    searchQuery: 'marvel game:paper',
+    searchPath: '/search?q=marvel',
+  },
+  {
+    id: 'pip',
+    name: 'Fallout Commander',
+    subtitle: 'Recent Fallout staples that show up in commander tables.',
+    searchQuery: 'set:pip game:paper',
+    searchPath: '/search?q=set%3Apip',
+  },
+  {
+    id: 'acr',
+    name: 'Assassin\'s Creed',
+    subtitle: 'New crossover tech and high-synergy cards.',
+    searchQuery: 'set:acr game:paper',
+    searchPath: '/search?q=set%3Aacr',
+  },
+];
+
 function getArtCropUrl(card: {
   image_uris?: { art_crop?: string };
   card_faces?: Array<{ image_uris?: { art_crop?: string } }>;
@@ -105,7 +151,30 @@ function getArtCropUrl(card: {
   return card.image_uris?.art_crop ?? card.card_faces?.[0]?.image_uris?.art_crop ?? '';
 }
 
+function normalizeCommanderGuess(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findCommanderByGuess(commanders: ScryfallCard[], guess: string): ScryfallCard | null {
+  const normalizedGuess = normalizeCommanderGuess(guess);
+  if (!normalizedGuess) return null;
+
+  const direct = commanders.find(
+    (commander) => normalizeCommanderGuess(commander.name) === normalizedGuess
+  );
+
+  return direct ?? null;
+}
+
 export default function HomePage() {
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { decks, createDeck, updateDeck } = useDecks(user?.uid ?? null);
@@ -121,7 +190,29 @@ export default function HomePage() {
   const [guessInput, setGuessInput] = useState('');
   const [guessLoading, setGuessLoading] = useState(false);
   const [guessFeedback, setGuessFeedback] = useState('');
+  const [guessFeedbackTone, setGuessFeedbackTone] = useState<'success' | 'info'>('info');
+  const [guessSuggestions, setGuessSuggestions] = useState<string[]>([]);
   const [hintLevel, setHintLevel] = useState(1);
+  const [releaseCards, setReleaseCards] = useState<Record<string, ScryfallCard[]>>({});
+  const [releaseLoading, setReleaseLoading] = useState(false);
+  const [releaseError, setReleaseError] = useState('');
+  const [activeReleaseIndex, setActiveReleaseIndex] = useState(0);
+  const [releasePaused, setReleasePaused] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    setIsCompactLayout(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsCompactLayout(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -146,6 +237,49 @@ export default function HomePage() {
     };
 
     void loadSlides();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadReleaseSpotlights = async () => {
+      setReleaseLoading(true);
+      setReleaseError('');
+
+      try {
+        const pairs = await Promise.all(
+          RELEASE_SPOTLIGHTS.map(async (release) => {
+            const response = await searchCards(release.searchQuery, 1, {
+              unique: 'cards',
+              order: 'edhrec',
+              dir: 'desc',
+            });
+
+            const cards = (response.data ?? [])
+              .filter((card) => Boolean(card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal))
+              .slice(0, 5);
+
+            return [release.id, cards] as const;
+          })
+        );
+
+        if (ignore) return;
+        setReleaseCards(Object.fromEntries(pairs));
+      } catch {
+        if (ignore) return;
+        setReleaseError('Could not load latest release spotlights right now.');
+      } finally {
+        if (!ignore) {
+          setReleaseLoading(false);
+        }
+      }
+    };
+
+    void loadReleaseSpotlights();
 
     return () => {
       ignore = true;
@@ -204,6 +338,43 @@ export default function HomePage() {
     `Mana Cost: ${manaHint}`,
     `Card Type: ${typeHint}`,
   ];
+
+  useEffect(() => {
+    const trimmedInput = guessInput.trim();
+    if (!trimmedInput || trimmedInput.length < 2) {
+      setGuessSuggestions([]);
+      return;
+    }
+
+    const normalizedInput = normalizeCommanderGuess(trimmedInput);
+    const localSuggestions = topCommanders
+      .map((commander) => commander.name)
+      .filter((name) => normalizeCommanderGuess(name).includes(normalizedInput))
+      .slice(0, 6);
+
+    if (localSuggestions.length >= 3) {
+      setGuessSuggestions(localSuggestions);
+      return;
+    }
+
+    let ignore = false;
+    const loadAutocomplete = async () => {
+      const remote = await getCardAutocomplete(trimmedInput);
+      if (ignore) return;
+
+      const merged = [...localSuggestions, ...remote]
+        .filter((value, index, arr) => arr.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .slice(0, 6);
+
+      setGuessSuggestions(merged);
+    };
+
+    void loadAutocomplete();
+
+    return () => {
+      ignore = true;
+    };
+  }, [guessInput, topCommanders]);
 
   const getDeckCard = (card: ScryfallCard): DeckCard => ({
     scryfallId: card.id,
@@ -294,19 +465,30 @@ export default function HomePage() {
 
     setGuessLoading(true);
     setGuessFeedback('');
+    setGuessFeedbackTone('info');
 
     try {
-      const normalizedGuess = guessInput.trim().toLowerCase();
-      const normalizedTarget = tomorrowCommander.name.trim().toLowerCase();
+      const localCommanderMatch = findCommanderByGuess(topCommanders, guessInput.trim());
+      const matchedByName = localCommanderMatch
+        ? normalizeCommanderGuess(localCommanderMatch.name) === normalizeCommanderGuess(tomorrowCommander.name)
+        : false;
 
-      if (normalizedGuess === normalizedTarget) {
+      if (matchedByName) {
+        setGuessFeedbackTone('success');
         setGuessFeedback('Correct prediction. You guessed tomorrow\'s commander.');
         return;
       }
 
-      const guessedCard = await getCardByName(guessInput.trim());
+      const guessedCard = localCommanderMatch ?? await getCardByName(guessInput.trim());
       if (!guessedCard) {
+        setGuessFeedbackTone('info');
         setGuessFeedback('Not quite. Keep using hints and try another commander.');
+        return;
+      }
+
+      if (normalizeCommanderGuess(guessedCard.name) === normalizeCommanderGuess(tomorrowCommander.name)) {
+        setGuessFeedbackTone('success');
+        setGuessFeedback('Correct prediction. You guessed tomorrow\'s commander.');
         return;
       }
 
@@ -322,6 +504,7 @@ export default function HomePage() {
         typeMatch ? 'Primary type matches.' : 'Primary type differs.',
       ];
 
+      setGuessFeedbackTone('info');
       setGuessFeedback(`Not tomorrow\'s pick. ${comparisons.join(' ')}`);
     } finally {
       setGuessLoading(false);
@@ -337,6 +520,62 @@ export default function HomePage() {
 
     return () => window.clearInterval(timer);
   }, [featuredSlides.length]);
+
+  const availableReleaseSpotlights = RELEASE_SPOTLIGHTS.filter(
+    (release) => (releaseCards[release.id] ?? []).length > 0
+  );
+  const activeRelease = availableReleaseSpotlights[activeReleaseIndex] ?? availableReleaseSpotlights[0] ?? null;
+
+  useEffect(() => {
+    if (availableReleaseSpotlights.length === 0) {
+      setActiveReleaseIndex(0);
+      return;
+    }
+
+    if (activeReleaseIndex >= availableReleaseSpotlights.length) {
+      setActiveReleaseIndex(0);
+    }
+  }, [activeReleaseIndex, availableReleaseSpotlights.length]);
+
+  useEffect(() => {
+    if (releasePaused || availableReleaseSpotlights.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setActiveReleaseIndex((prev) => (prev + 1) % availableReleaseSpotlights.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [availableReleaseSpotlights.length, releasePaused]);
+
+  const onReleaseInteractionStart = () => {
+    setReleasePaused(true);
+  };
+
+  const onReleaseInteractionEnd = () => {
+    setReleasePaused(false);
+  };
+
+  const handlePrevRelease = () => {
+    if (availableReleaseSpotlights.length <= 1) return;
+    setActiveReleaseIndex((prev) => (
+      prev - 1 < 0 ? availableReleaseSpotlights.length - 1 : prev - 1
+    ));
+  };
+
+  const handleNextRelease = () => {
+    if (availableReleaseSpotlights.length <= 1) return;
+    setActiveReleaseIndex((prev) => (prev + 1) % availableReleaseSpotlights.length);
+  };
+
+  const handlePrevFeatured = () => {
+    if (featuredSlides.length <= 1) return;
+    setActiveSlide((prev) => (prev - 1 < 0 ? featuredSlides.length - 1 : prev - 1));
+  };
+
+  const handleNextFeatured = () => {
+    if (featuredSlides.length <= 1) return;
+    setActiveSlide((prev) => (prev + 1) % featuredSlides.length);
+  };
 
   const currentSlide = featuredSlides[activeSlide] ?? null;
 
@@ -357,7 +596,7 @@ export default function HomePage() {
       </section>
 
       <section className="home-grid">
-        <details className="card-surface home-card home-card-collapsible" open>
+        <details className="card-surface home-card home-card-collapsible" open={!isCompactLayout}>
           <summary className="home-card-summary">
             <h2>What is MTG?</h2>
             <span className="home-card-chevron" aria-hidden="true">+</span>
@@ -370,7 +609,7 @@ export default function HomePage() {
           </div>
         </details>
 
-        <details className="card-surface home-card home-card-collapsible" open>
+        <details className="card-surface home-card home-card-collapsible" open={!isCompactLayout}>
           <summary className="home-card-summary">
             <h2>Core Formats</h2>
             <span className="home-card-chevron" aria-hidden="true">+</span>
@@ -381,7 +620,7 @@ export default function HomePage() {
           </div>
         </details>
 
-        <details className="card-surface home-card home-card-collapsible" open>
+        <details className="card-surface home-card home-card-collapsible" open={!isCompactLayout}>
           <summary className="home-card-summary">
             <h2>Popular Searches</h2>
             <span className="home-card-chevron" aria-hidden="true">+</span>
@@ -497,11 +736,33 @@ export default function HomePage() {
                     value={guessInput}
                     onChange={(event) => setGuessInput(event.target.value)}
                     placeholder="Type a commander name"
+                    list="commander-guess-suggestions"
+                    autoComplete="off"
                   />
+                  <datalist id="commander-guess-suggestions">
+                    {guessSuggestions.map((suggestion) => (
+                      <option key={suggestion} value={suggestion} />
+                    ))}
+                  </datalist>
                   <button type="submit" className="btn btn-primary" disabled={guessLoading}>
                     Check Guess
                   </button>
                 </form>
+
+                {guessSuggestions.length > 0 && (
+                  <div className="commander-guess-suggestions" aria-label="Commander suggestions">
+                    {guessSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className="commander-guess-suggestion"
+                        onClick={() => setGuessInput(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -518,11 +779,125 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                {guessFeedback && <p className="success-msg">{guessFeedback}</p>}
+                {guessFeedback && <p className={guessFeedbackTone === 'success' ? 'success-msg' : 'muted'}>{guessFeedback}</p>}
                 <p className="muted">Hints help narrow the field without revealing the name directly.</p>
               </div>
             </aside>
           </div>
+        )}
+      </section>
+
+      <section className="card-surface home-release-section">
+        <div className="release-section-head">
+          <div>
+            <p className="home-kicker">Latest Release Buzz</p>
+            <h2>Top Cards in New Drops</h2>
+            <p className="muted">Auto-scrolls by release and pauses while you interact.</p>
+          </div>
+          <div className="release-tabs" role="tablist" aria-label="Featured releases">
+            {availableReleaseSpotlights.map((release, index) => (
+              <button
+                key={release.id}
+                type="button"
+                className={`release-tab ${index === activeReleaseIndex ? 'active' : ''}`}
+                onClick={() => setActiveReleaseIndex(index)}
+                aria-selected={index === activeReleaseIndex}
+              >
+                {release.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {releaseLoading && <p>Loading release spotlight…</p>}
+        {releaseError && <p className="error-msg">{releaseError}</p>}
+
+        {!releaseLoading && !releaseError && availableReleaseSpotlights.length > 0 && (
+          <div
+            className="release-carousel"
+            onMouseEnter={onReleaseInteractionStart}
+            onMouseLeave={onReleaseInteractionEnd}
+            onTouchStart={onReleaseInteractionStart}
+            onTouchEnd={onReleaseInteractionEnd}
+            onFocusCapture={onReleaseInteractionStart}
+            onBlurCapture={onReleaseInteractionEnd}
+          >
+            <div
+              className="release-track"
+              style={{ transform: `translateX(-${activeReleaseIndex * 100}%)` }}
+            >
+              {availableReleaseSpotlights.map((release) => {
+                const cards = releaseCards[release.id] ?? [];
+
+                return (
+                  <article key={release.id} className="release-slide">
+                    <div className="release-slide-head">
+                      <div>
+                        <h3>{release.name}</h3>
+                        <p className="muted">{release.subtitle}</p>
+                      </div>
+                      <Link to={release.searchPath} className="btn btn-sm btn-ghost">Browse Set</Link>
+                    </div>
+
+                    <div className="release-cards-grid">
+                      {cards.map((card) => (
+                        <Link
+                          key={card.id}
+                          to={`/search?q=${encodeURIComponent(card.name)}`}
+                          className="release-mini-card"
+                        >
+                          <img
+                            src={card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal}
+                            alt={card.name}
+                            className="release-mini-card-image"
+                          />
+                          <span className="release-mini-card-name">{card.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="release-carousel-footer">
+              <p className="muted">Swipe or tap a tab to switch releases. Autoplay resumes after interaction.</p>
+              <div className="release-controls">
+                <button
+                  type="button"
+                  className="carousel-arrow"
+                  onClick={handlePrevRelease}
+                  disabled={availableReleaseSpotlights.length <= 1}
+                  aria-label="Previous release spotlight"
+                >
+                  <span aria-hidden="true">&#8592;</span>
+                </button>
+                <div className="release-dots" aria-hidden="true">
+                  {availableReleaseSpotlights.map((release, index) => (
+                    <button
+                      key={`${release.id}-${index}`}
+                      type="button"
+                      className={`release-dot ${index === activeReleaseIndex ? 'active' : ''}`}
+                      onClick={() => setActiveReleaseIndex(index)}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="carousel-arrow"
+                  onClick={handleNextRelease}
+                  disabled={availableReleaseSpotlights.length <= 1}
+                  aria-label="Next release spotlight"
+                >
+                  <span aria-hidden="true">&#8594;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!releaseLoading && !releaseError && availableReleaseSpotlights.length === 0 && (
+          <p className="muted">No release spotlights are available right now.</p>
         )}
       </section>
 
@@ -550,13 +925,33 @@ export default function HomePage() {
                   <p>{currentSlide.description}</p>
                 </div>
               </a>
-              <div className="home-slide-dots" aria-hidden="true">
-                {featuredSlides.map((slide, index) => (
-                  <span
-                    key={`${slide.title}-${index}`}
-                    className={`home-slide-dot ${index === activeSlide ? 'active' : ''}`}
-                  />
-                ))}
+              <div className="home-slide-dots">
+                <div className="home-featured-controls">
+                  <button
+                    type="button"
+                    className="carousel-arrow"
+                    onClick={handlePrevFeatured}
+                    disabled={featuredSlides.length <= 1}
+                    aria-label="Previous featured story"
+                  >
+                    <span aria-hidden="true">&#8592;</span>
+                  </button>
+                  {featuredSlides.map((slide, index) => (
+                    <span
+                      key={`${slide.title}-${index}`}
+                      className={`home-slide-dot ${index === activeSlide ? 'active' : ''}`}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className="carousel-arrow"
+                    onClick={handleNextFeatured}
+                    disabled={featuredSlides.length <= 1}
+                    aria-label="Next featured story"
+                  >
+                    <span aria-hidden="true">&#8594;</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

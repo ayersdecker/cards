@@ -13,9 +13,12 @@ interface PrintTile {
 export default function ProxyPrintPage() {
   const { id, sourceType } = useParams<{ id: string; sourceType?: 'deck' | 'collection' }>();
   const { user } = useAuth();
-  const { collections } = useCollections(user?.uid ?? null);
-  const { decks } = useDecks(user?.uid ?? null);
+  const { collections, updateCollection } = useCollections(user?.uid ?? null);
+  const { decks, updateDeck } = useDecks(user?.uid ?? null);
   const resolvedSourceType = sourceType ?? 'deck';
+  const [clearLoading, setClearLoading] = useState(false);
+  const [clearError, setClearError] = useState('');
+  const [clearMessage, setClearMessage] = useState('');
 
   const deck = resolvedSourceType === 'deck' ? decks.find((entry) => entry.id === id) : null;
   const collection = resolvedSourceType === 'collection'
@@ -54,6 +57,37 @@ export default function ProxyPrintPage() {
   const editLink = deck ? `/collections/deck/${deck.id}` : collection ? `/collections/${collection.id}` : '/collections';
   const [printDensity, setPrintDensity] = useState<'super' | 'balanced' | 'loose'>('super');
 
+  const clearCurrentQueue = async () => {
+    setClearLoading(true);
+    setClearError('');
+    setClearMessage('');
+
+    try {
+      if (deck) {
+        const nextCards = deck.cards.map((card) => ({
+          ...card,
+          proxyQueuedQuantity: 0,
+        }));
+        await updateDeck(deck.id, { cards: nextCards });
+        setClearMessage(`Cleared queue for ${deck.name}.`);
+        return;
+      }
+
+      if (collection) {
+        const nextCards = collection.cards.map((card) => ({
+          ...card,
+          proxyQueuedQuantity: 0,
+        }));
+        await updateCollection(collection.id, { cards: nextCards });
+        setClearMessage(`Cleared queue for ${collection.name}.`);
+      }
+    } catch {
+      setClearError('Failed to clear queued proxies.');
+    } finally {
+      setClearLoading(false);
+    }
+  };
+
   if (!sourceName) {
     return (
       <div className="page">
@@ -68,10 +102,20 @@ export default function ProxyPrintPage() {
       <div className="page-header proxy-print-header">
         <Link to="/proxies" className="back-link">← Back to Proxies</Link>
         <h2 className="page-title">{sourceName}</h2>
+        <button
+          type="button"
+          className="btn btn-danger proxy-print-btn"
+          onClick={() => void clearCurrentQueue()}
+          disabled={clearLoading}
+        >
+          {clearLoading ? 'Clearing…' : 'Clear Queue'}
+        </button>
         <button type="button" className="btn btn-primary proxy-print-btn" onClick={() => window.print()}>
           Print
         </button>
       </div>
+      {clearError && <div className="error-msg">{clearError}</div>}
+      {clearMessage && <div className="success-msg">{clearMessage}</div>}
       <div className="proxy-print-mode-row" role="group" aria-label="Print density mode">
         <button
           type="button"

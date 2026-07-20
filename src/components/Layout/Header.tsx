@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -6,12 +6,18 @@ export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const logoSrc = `${import.meta.env.BASE_URL}logo-hawk.svg`;
 
   const handleLogout = async () => {
     await logout();
+    setMobileMenuOpen(false);
     navigate('/login');
   };
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -35,6 +41,22 @@ export default function Header() {
           <span className="brand-collection accent-cyan">Cards</span>
         </Link>
       </div>
+
+      <button
+        type="button"
+        className="mobile-menu-toggle"
+        aria-expanded={mobileMenuOpen}
+        aria-controls="mobile-header-menu"
+        aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        onClick={() => setMobileMenuOpen((open) => !open)}
+      >
+        <span className={`hamburger-icon ${mobileMenuOpen ? 'is-open' : ''}`} aria-hidden="true">
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+        </span>
+      </button>
+
       <nav className="header-nav">
         {navLinks.map((l) => (
           <Link
@@ -56,6 +78,42 @@ export default function Header() {
             <button onClick={handleLogout} className="btn btn-sm btn-ghost">
               Logout
             </button>
+          </div>
+        )}
+      </div>
+
+      <div
+        id="mobile-header-menu"
+        className={`mobile-menu-panel ${mobileMenuOpen ? 'open' : ''}`}
+      >
+        <nav className="mobile-menu-nav" aria-label="Mobile navigation">
+          {navLinks.map((l) => (
+            <Link
+              key={`mobile-${l.to}`}
+              to={l.to}
+              className={`mobile-menu-link ${isActive(l.to) ? 'active' : ''}`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {user && (
+          <div className="mobile-menu-user">
+            <p className="user-email">{user.email}</p>
+            <div className="mobile-menu-actions">
+              <Link
+                to="/settings"
+                className="btn btn-sm btn-ghost"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Settings
+              </Link>
+              <button onClick={() => void handleLogout()} className="btn btn-sm btn-ghost">
+                Logout
+              </button>
+            </div>
           </div>
         )}
       </div>

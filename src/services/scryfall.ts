@@ -4,6 +4,8 @@ const BASE = 'https://api.scryfall.com';
 
 interface SearchCardOptions {
   unique?: 'cards' | 'prints';
+  order?: 'name' | 'set' | 'released' | 'rarity' | 'color' | 'usd' | 'tix' | 'eur' | 'cmc' | 'power' | 'toughness' | 'edhrec' | 'penny' | 'artist' | 'review';
+  dir?: 'auto' | 'asc' | 'desc';
 }
 
 export async function searchCards(
@@ -13,8 +15,8 @@ export async function searchCards(
 ): Promise<ScryfallSearchResponse> {
   const params = new URLSearchParams({
     q: query,
-    order: 'released',
-    dir: 'desc',
+    order: options.order ?? 'released',
+    dir: options.dir ?? 'desc',
     page: String(page),
     unique: options.unique ?? 'cards',
   });

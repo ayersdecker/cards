@@ -21,6 +21,27 @@ export default function Layout() {
         <main className="app-main reveal-in">
           <Outlet />
         </main>
+        <footer className="app-footer">
+          <p>
+            Built by Decker Ayers. Visit{' '}
+            <a href="https://www.deckerayers.com" target="_blank" rel="noreferrer">
+              www.deckerayers.com
+            </a>
+            {' '}| Github:{' '}
+            <a href="https://github.com/ayersdecker" target="_blank" rel="noreferrer">
+              @ayersdecker
+            </a>
+            {' '}| Instagram:{' '}
+            <a href="https://www.instagram.com/iamdeckerayers" target="_blank" rel="noreferrer">
+              @iamdeckerayers
+            </a>
+            {' '}| YouTube:{' '}
+            <a href="https://www.youtube.com/@IAmDeckerAyers" target="_blank" rel="noreferrer">
+              IAmDeckerAyers
+            </a>
+            .
+          </p>
+        </footer>
       </div>
     </div>
   );

@@ -173,7 +173,7 @@ export default function TradeBinderPage() {
       )}
 
       {filteredEntries.length > 0 && (
-        <div className="table-wrapper">
+        <div className="table-wrapper trade-table-wrapper trade-desktop-table">
           <table className="data-table">
             <thead>
               <tr>
@@ -239,6 +239,59 @@ export default function TradeBinderPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {filteredEntries.length > 0 && (
+        <div className="trade-mobile-list" aria-label="Trade cards mobile list">
+          {filteredEntries.map((entry) => (
+            <article key={`mobile-${entry.id}`} className="trade-mobile-card card-surface">
+              <div className="trade-mobile-head">
+                {entry.imageUri && (
+                  <button
+                    type="button"
+                    className="table-card-link"
+                    onClick={() => void openCardDetail(entry.id)}
+                    disabled={detailLoadingId === entry.id}
+                  >
+                    <img src={entry.imageUri} alt={entry.name} className="table-card-img trade-mobile-img" />
+                  </button>
+                )}
+                <div className="trade-mobile-title-wrap">
+                  <button
+                    type="button"
+                    className="table-card-link table-card-name-link trade-mobile-title"
+                    onClick={() => void openCardDetail(entry.id)}
+                    disabled={detailLoadingId === entry.id}
+                  >
+                    {detailLoadingId === entry.id ? 'Loading…' : entry.name}
+                  </button>
+                  <p className="muted trade-mobile-set">{entry.set_name}</p>
+                </div>
+                <span className={`tradeability tradeability-${entry.tradeability.toLowerCase()}`}>
+                  {entry.tradeability}
+                </span>
+              </div>
+
+              <div className="trade-mobile-metrics">
+                <div><span>Own</span><strong>{entry.ownedQty}</strong></div>
+                <div><span>Trade</span><strong>{entry.tradeQty}</strong></div>
+                <div><span>EA</span><strong>${entry.marketPrice.toFixed(2)}</strong></div>
+                <div><span>Total</span><strong>${entry.ownedValue.toFixed(2)}</strong></div>
+              </div>
+
+              <div className="trade-tag-list">
+                {entry.tags.map((tag) => (
+                  <span
+                    key={`mobile-${entry.id}-${tag}`}
+                    className={`trade-tag ${tag === 'Duplicate' ? 'is-duplicate' : ''}`}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
         </div>
       )}
 
