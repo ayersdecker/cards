@@ -6,14 +6,10 @@
     <title>Redirecting...</title>
     <script>
       (function () {
-        var path = window.location.pathname;
+        var path = window.location.pathname || '/';
         var search = window.location.search || '';
-        var segments = path.split('/').filter(Boolean);
-        var repoBase = segments.length > 0 ? '/' + segments[0] : '';
-        var routeSegments = segments.slice(1);
-        var route = routeSegments.length > 0 ? '/' + routeSegments.join('/') : '/';
-        var destination = repoBase + '/#' + route + search;
-
+        var hash = window.location.hash || '';
+        var destination = '/?p=' + encodeURIComponent(path + search + hash);
         window.location.replace(destination);
       })();
     </script>

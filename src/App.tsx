@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { StorageSettingsProvider } from './context/StorageSettingsContext';
 import Layout from './components/Layout/Layout';
@@ -24,7 +24,7 @@ export default function App() {
   return (
     <AuthProvider>
       <StorageSettingsProvider>
-        <HashRouter>
+        <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<Navigate to="/login" replace />} />
@@ -45,7 +45,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </HashRouter>
+        </BrowserRouter>
       </StorageSettingsProvider>
     </AuthProvider>
   );
