@@ -1275,11 +1275,24 @@ input[type='checkbox']:focus-visible {
 .card-detail-inner {
   display: flex;
   gap: 2rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: stretch;
 }
-.card-detail-image { flex-shrink: 0; }
-.card-detail-image img { width: 240px; border-radius: 10px; box-shadow: var(--shadow); }
-.card-detail-info { flex: 1; min-width: 200px; }
+.card-detail-image {
+  flex: 0 0 auto;
+  display: flex;
+  align-self: stretch;
+}
+.card-detail-image img {
+  width: auto;
+  height: 100%;
+  max-height: calc(90vh - 5rem);
+  max-width: 420px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  object-fit: contain;
+}
+.card-detail-info { flex: 1; min-width: 0; }
 .card-detail-info h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
 .card-type { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; }
 .card-mana { font-size: 0.9rem; margin-bottom: 0.5rem; }
@@ -1983,7 +1996,25 @@ input[type='checkbox']:focus-visible {
   transition: border-color 0.2s;
 }
 .deck-card-row:hover { border-color: var(--accent-cyan); }
-.deck-row-img { width: 32px; border-radius: 3px; flex-shrink: 0; }
+.deck-row-image-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.deck-row-image-button:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+.deck-row-img {
+  width: 56px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: block;
+}
 .deck-row-info { flex: 1; min-width: 0; }
 .deck-row-name {
   font-weight: 600;
@@ -2725,6 +2756,7 @@ input[type='checkbox']:focus-visible {
   }
 
   .card-detail-inner {
+    flex-wrap: wrap;
     gap: 1rem;
   }
 
@@ -3011,7 +3043,8 @@ input[type='checkbox']:focus-visible {
   }
 
   .deck-row-img {
-    width: 42px;
+    width: 48px;
+    height: 67px;
   }
 
   .deck-row-controls {
@@ -3129,6 +3162,7 @@ input[type='checkbox']:focus-visible {
 
 @media print {
   .app-header,
+  .app-footer,
   .proxy-print-header,
   .proxy-print-note,
   .proxy-print-btn,

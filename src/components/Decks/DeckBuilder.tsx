@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDecks, useCollections } from '../../hooks/useFirestore';
+import CardDetail from '../Cards/CardDetail';
 import { searchCards, getCardByExactName, getCardById, getCardByName, getCardImage, getSimilarCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
@@ -46,6 +47,9 @@ export default function DeckBuilder() {
   const [aiError, setAiError] = useState('');
   const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
   const [deckRuleError, setDeckRuleError] = useState('');
+  const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
+  const [selectedCardLoading, setSelectedCardLoading] = useState(false);
+  const [selectedCardError, setSelectedCardError] = useState('');
 
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
@@ -245,6 +249,19 @@ export default function DeckBuilder() {
     const opts = await getSimilarCards(fakeCard);
     setHotswapOptions(opts);
     setLoadingHotswap(false);
+  };
+
+  const openCardDetail = async (card: DeckCard) => {
+    setSelectedCardError('');
+    setSelectedCardLoading(true);
+    const detailedCard = await getCardById(card.scryfallId);
+    if (detailedCard) {
+      setSelectedCard(detailedCard);
+    } else {
+      setSelectedCardError('Card details are unavailable for this entry.');
+      setSelectedCard(null);
+    }
+    setSelectedCardLoading(false);
   };
 
   const doHotswap = async (replacement: ScryfallCard) => {
@@ -594,8 +611,20 @@ export default function DeckBuilder() {
               const proxyQueued = Math.max(0, Math.min(c.proxyQueuedQuantity ?? 0, missingQty));
 
               return (
-                <div key={`${c.scryfallId}-${c.isSideboard}`} className="deck-card-row">
-                  {c.imageUri && <img src={c.imageUri} alt={c.name} className="deck-row-img" />}
+                <div
+                  key={`${c.scryfallId}-${c.isSideboard}`}
+                  className="deck-card-row"
+                >
+                  {c.imageUri && (
+                    <button
+                      type="button"
+                      className="deck-row-image-button"
+                      onClick={() => void openCardDetail(c)}
+                      aria-label={`View details for ${c.name}`}
+                    >
+                      <img src={c.imageUri} alt={c.name} className="deck-row-img" />
+                    </button>
+                  )}
                   <div className="deck-row-info">
                     <span className="deck-row-name">
                       {c.name}
@@ -635,7 +664,7 @@ export default function DeckBuilder() {
                       {missingQty === 0 && <span className="muted">Ready to play</span>}
                     </div>
                   </div>
-                  <div className="deck-row-controls">
+                  <div className="deck-row-controls" onClick={(event) => event.stopPropagation()}>
                     <button className="qty-btn" onClick={() => void changeQty(c.scryfallId, c.isSideboard, -1)}>−</button>
                     <span className="qty-val">{c.quantity}</span>
                     <button className="qty-btn" onClick={() => void changeQty(c.scryfallId, c.isSideboard, 1)}>+</button>
@@ -824,6 +853,28 @@ export default function DeckBuilder() {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedCardLoading && (
+        <div className="modal-overlay" onClick={() => setSelectedCardLoading(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedCardLoading(false)}>✕</button>
+            <p>Loading card details…</p>
+          </div>
+        </div>
+      )}
+
+      {selectedCardError && !selectedCardLoading && (
+        <div className="modal-overlay" onClick={() => setSelectedCardError('')}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedCardError('')}>✕</button>
+            <p>{selectedCardError}</p>
+          </div>
+        </div>
+      )}
+
+      {selectedCard && !selectedCardLoading && (
+        <CardDetail card={selectedCard} onClose={() => setSelectedCard(null)} />
       )}
     </div>
   );
