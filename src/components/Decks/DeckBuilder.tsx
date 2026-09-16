@@ -713,7 +713,14 @@ export default function DeckBuilder() {
               <div className="deck-search-results">
                 {searchResults.map((card) => (
                   <div key={card.id} className="deck-search-row">
-                    <span>{card.name}</span>
+                    <div className="deck-search-info">
+                      {getCardImage(card) ? (
+                        <img src={getCardImage(card)} alt={card.name} className="deck-search-thumb" loading="lazy" />
+                      ) : (
+                        <div className="deck-search-no-image">{card.name}</div>
+                      )}
+                      <span className="deck-search-name">{card.name}</span>
+                    </div>
                     <div>
                       <button className="btn btn-sm btn-outline" onClick={() => addCard(card, false)}>+ Main</button>
                       <button className="btn btn-sm btn-ghost" onClick={() => addCard(card, true)}>+ Side</button>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections } from '../../hooks/useFirestore';
-import { getCardById, getCardImage, mapColors } from '../../services/scryfall';
+import { getCardById, getCardImage, mapColors, searchCards } from '../../services/scryfall';
 import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportCollection } from '../../services/excel';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
@@ -25,6 +25,12 @@ export default function CollectionDetail() {
   const [refreshError, setRefreshError] = useState('');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
+  const [searchQ, setSearchQ] = useState('');
+  const [searchResults, setSearchResults] = useState<ScryfallCard[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+  const [addedCardId, setAddedCardId] = useState<string | null>(null);
 
   if (!col) return <div className="page"><p>Collection not found.</p></div>;
 
@@ -174,6 +180,53 @@ export default function CollectionDetail() {
     }
   };
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQ.trim()) return;
+    setSearching(true);
+    setSearchError('');
+    setHasSearched(true);
+    setAddedCardId(null);
+    try {
+      const res = await searchCards(searchQ.trim(), 1, {
+        unique: settings.includeAllPrintings ? 'prints' : 'cards',
+      });
+      setSearchResults(res.data.slice(0, 12));
+    } catch {
+      setSearchResults([]);
+      setSearchError('Search failed. Try a different query.');
+    }
+    setSearching(false);
+  };
+
+  const addCardToCollection = async (card: ScryfallCard) => {
+    const existing = col.cards.find((entry) => entry.scryfallId === card.id);
+    const nextCards = existing
+      ? col.cards.map((entry) =>
+          entry.scryfallId === card.id ? { ...entry, quantity: entry.quantity + 1 } : entry
+        )
+      : [
+          ...col.cards,
+          {
+            scryfallId: card.id,
+            name: card.name,
+            set: card.set,
+            set_name: card.set_name,
+            price: card.prices.usd,
+            colors: card.colors ?? [],
+            imageUri: getCardImage(card),
+            addedAt: Date.now(),
+            quantity: 1,
+            cmc: card.cmc,
+            type_line: card.type_line,
+            mana_cost: card.mana_cost,
+          },
+        ];
+
+    await updateCollection(col.id, { cards: nextCards });
+    setAddedCardId(card.id);
+  };
+
   const openCardDetail = async (scryfallId: string) => {
     setRefreshError('');
     setDetailLoadingId(scryfallId);
@@ -211,6 +264,45 @@ export default function CollectionDetail() {
       </div>
       {refreshMessage && <div className="success-msg">{refreshMessage}</div>}
       {refreshError && <div className="error-msg">{refreshError}</div>}
+      <div className="deck-search">
+        <h4>Add Cards</h4>
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            className="search-input"
+            placeholder="Search to add…"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+          />
+          <button type="submit" className="btn btn-primary" disabled={searching || !searchQ.trim()}>
+            {searching ? 'Searching…' : 'Search'}
+          </button>
+        </form>
+        {searchError && <div className="error-msg">{searchError}</div>}
+        {!searching && hasSearched && !searchError && searchResults.length === 0 && (
+          <p className="muted">No cards found for that search.</p>
+        )}
+        {searchResults.length > 0 && (
+          <div className="deck-search-results">
+            {searchResults.map((card) => (
+              <div key={card.id} className="deck-search-row">
+                <div className="deck-search-info">
+                  {getCardImage(card) ? (
+                    <img src={getCardImage(card)} alt={card.name} className="deck-search-thumb" loading="lazy" />
+                  ) : (
+                    <div className="deck-search-no-image">{card.name}</div>
+                  )}
+                  <span className="deck-search-name">{card.name}</span>
+                </div>
+                <div>
+                  <button className="btn btn-sm btn-outline" onClick={() => void addCardToCollection(card)}>
+                    {addedCardId === card.id ? 'Added ✓' : '+ Add'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <section className="bulk-import-card">
         <div className="bulk-import-head">
           <div>
