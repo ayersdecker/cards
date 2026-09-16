@@ -144,6 +144,16 @@ export default function ProxyHubPage() {
         Queue cards from either collections or decks, then print from here.
       </p>
 
+      <div className="card-surface proxy-best-practices">
+        <h3>Printing Best Practices</h3>
+        <p className="muted">
+          The best paper for printing trading card proxies at home is heavyweight <strong>300–330 gsm core cardstock</strong>{' '}
+          (such as blue-core or black-core inkjet cardstock) or <strong>250–330 gsm matte photo paper</strong> if you want to
+          skip lamination. Print at 100% scale (no "fit to page"), and double-check card dimensions come out to 63mm x 88mm
+          before cutting.
+        </p>
+      </div>
+
       {rows.length > 0 && (
         <div className="proxy-queue-actions">
           <button

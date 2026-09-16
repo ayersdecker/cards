@@ -150,6 +150,10 @@ export default function ProxyPrintPage() {
       {printDensity === 'loose' && (
         <p className="proxy-cut-hint muted">Loose mode: follow dotted outlines and "Cut here" labels for easy trimming.</p>
       )}
+      <p className="muted proxy-print-tips">
+        Best results: print on 300–330 gsm core cardstock (blue-core or black-core) or 250–330 gsm matte photo paper
+        if skipping lamination.
+      </p>
       <p className="muted proxy-print-note">
         Print at 100% scale. Card size is fixed to standard 63mm x 88mm in all modes. Queue total: {tiles.length}
       </p>

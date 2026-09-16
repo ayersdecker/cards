@@ -29,6 +29,8 @@ export default function DeckBuilder() {
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<ScryfallCard[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
   const [hotswapCard, setHotswapCard] = useState<DeckCard | null>(null);
   const [hotswapOptions, setHotswapOptions] = useState<ScryfallCard[]>([]);
   const [loadingHotswap, setLoadingHotswap] = useState(false);
@@ -95,11 +97,16 @@ export default function DeckBuilder() {
     e.preventDefault();
     if (!searchQ.trim()) return;
     setSearching(true);
+    setSearchError('');
+    setHasSearched(true);
     try {
-      const res = await searchCards(searchQ.trim());
+      const res = await searchCards(searchQ.trim(), 1, {
+        unique: settings.includeAllPrintings ? 'prints' : 'cards',
+      });
       setSearchResults(res.data.slice(0, 12));
     } catch {
       setSearchResults([]);
+      setSearchError('Search failed. Try a different query.');
     }
     setSearching(false);
   };
@@ -689,14 +696,19 @@ export default function DeckBuilder() {
             <h4>Add Cards</h4>
             <form onSubmit={handleSearch} className="search-form">
               <input
+                className="search-input"
                 placeholder="Search to add…"
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
               />
-              <button type="submit" className="btn btn-primary" disabled={searching}>
-                {searching ? '…' : 'Search'}
+              <button type="submit" className="btn btn-primary" disabled={searching || !searchQ.trim()}>
+                {searching ? 'Searching…' : 'Search'}
               </button>
             </form>
+            {searchError && <div className="error-msg">{searchError}</div>}
+            {!searching && hasSearched && !searchError && searchResults.length === 0 && (
+              <p className="muted">No cards found for that search.</p>
+            )}
             {searchResults.length > 0 && (
               <div className="deck-search-results">
                 {searchResults.map((card) => (
