@@ -9,10 +9,11 @@ import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { getStorageRec, getStorageTone } from '../../services/storageSettings';
 import type { ScryfallCard } from '../../types';
 import CardDetail from '../Cards/CardDetail';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 export default function CollectionDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { settings } = useStorageSettings();
   const { collections, updateCollection } = useCollections(user?.uid ?? null);
   const col = collections.find((c) => c.id === id);
@@ -32,6 +33,8 @@ export default function CollectionDetail() {
   const [hasSearched, setHasSearched] = useState(false);
   const [addedCardId, setAddedCardId] = useState<string | null>(null);
 
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><SignInPrompt message="Sign in to view and edit this collection." /></div>;
   if (!col) return <div className="page"><p>Collection not found.</p></div>;
 
   const removeCard = async (scryfallId: string) => {

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 interface PrintTile {
   key: string;
@@ -12,7 +13,7 @@ interface PrintTile {
 
 export default function ProxyPrintPage() {
   const { id, sourceType } = useParams<{ id: string; sourceType?: 'deck' | 'collection' }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { collections, updateCollection } = useCollections(user?.uid ?? null);
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
   const resolvedSourceType = sourceType ?? 'deck';
@@ -87,6 +88,9 @@ export default function ProxyPrintPage() {
       setClearLoading(false);
     }
   };
+
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><SignInPrompt message="Sign in to view and print cards from your proxy queue." /></div>;
 
   if (!sourceName) {
     return (

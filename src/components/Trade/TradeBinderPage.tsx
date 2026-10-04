@@ -4,6 +4,7 @@ import { useCollections } from '../../hooks/useFirestore';
 import { getCardById } from '../../services/scryfall';
 import type { ScryfallCard } from '../../types';
 import CardDetail from '../Cards/CardDetail';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 type TradeEntry = {
   id: string;
@@ -20,7 +21,7 @@ type TradeEntry = {
 };
 
 export default function TradeBinderPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { collections, loading } = useCollections(user?.uid ?? null);
   const [searchText, setSearchText] = useState('');
   const [mode, setMode] = useState<'all' | 'dupes' | 'tradeable'>('all');
@@ -102,6 +103,9 @@ export default function TradeBinderPage() {
   const totalTrade = tradeEntries.reduce((sum, entry) => sum + entry.tradeQty, 0);
   const totalValue = tradeEntries.reduce((sum, entry) => sum + entry.ownedValue, 0);
   const duplicateCount = tradeEntries.filter((entry) => entry.isDuplicate).length;
+
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><h2 className="page-title">Trade <span className="accent-cyan">Binder</span></h2><SignInPrompt message="Sign in to view your collection-based trade binder." /></div>;
 
   const openCardDetail = async (scryfallId: string) => {
     setDetailError('');

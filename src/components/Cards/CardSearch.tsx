@@ -146,7 +146,7 @@ export default function CardSearch() {
 
   const handleAddAllToCollection = async () => {
     if (!user) {
-      setError('Sign in to add bulk cards to a collection.');
+      navigate('/login', { state: { from: '/search' } });
       return;
     }
 
@@ -310,19 +310,18 @@ export default function CardSearch() {
               type="button"
               className="btn btn-outline"
               onClick={handleAddAllToCollection}
-              disabled={addingAll || !user}
+              disabled={addingAll}
             >
               {addingAll
                 ? 'Adding…'
-                : bulkImportMode === 'new'
+                : !user
+                  ? 'Sign in to add results'
+                  : bulkImportMode === 'new'
                   ? 'Create Collection + Add All'
                   : 'Add All To Collection'}
             </button>
 
             <p className="muted">Ready to add {bulkResolved.length} matched entries in one step.</p>
-            {!user && (
-              <p className="muted">Sign in to bulk-add results to collections.</p>
-            )}
           </div>
         )}
         {bulkMissing.length > 0 && (

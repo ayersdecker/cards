@@ -14,6 +14,7 @@ import StorageSettingsPage from './components/Settings/StorageSettingsPage';
 import ProxyHubPage from './components/Proxy/ProxyHubPage';
 import ProxyPrintPage from './components/Proxy/ProxyPrintPage';
 import MissingFirebaseConfigPage from './components/System/MissingFirebaseConfigPage';
+import { AboutPage, ContactPage, PrivacyPage, TermsPage } from './components/InfoPages';
 import { firebaseEnvIssue, missingFirebaseEnvVars } from './services/firebase';
 
 export default function App() {
@@ -42,6 +43,10 @@ export default function App() {
               <Route path="/decks/:id" element={<Navigate to="/collections" replace />} />
               <Route path="/recognize" element={<Navigate to="/search" replace />} />
               <Route path="/settings" element={<StorageSettingsPage />} />
+                          <Route path="/about" element={<AboutPage />} />
+                          <Route path="/contact" element={<ContactPage />} />
+                          <Route path="/privacy" element={<PrivacyPage />} />
+                          <Route path="/terms" element={<TermsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

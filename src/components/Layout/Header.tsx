@@ -80,6 +80,11 @@ export default function Header() {
             </button>
           </div>
         )}
+        {!user && (
+          <Link to="/login" state={{ from: `${location.pathname}${location.search}` }} className="btn btn-sm btn-primary">
+            Sign In
+          </Link>
+        )}
       </div>
 
       <div
@@ -114,6 +119,18 @@ export default function Header() {
                 Logout
               </button>
             </div>
+          </div>
+        )}
+        {!user && (
+          <div className="mobile-menu-user">
+            <Link
+              to="/login"
+              state={{ from: `${location.pathname}${location.search}` }}
+              className="btn btn-sm btn-primary"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Sign In
+            </Link>
           </div>
         )}
       </div>

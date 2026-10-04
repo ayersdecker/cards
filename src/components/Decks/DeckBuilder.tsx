@@ -9,6 +9,7 @@ import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { chatWithDeckAssistant, optimizeDeck, type DeckAISuggestion } from '../../services/openai';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
   W: { label: 'White', color: '#f9fafb' },
@@ -20,7 +21,7 @@ const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
 
 export default function DeckBuilder() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { settings } = useStorageSettings();
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
   const { collections } = useCollections(user?.uid ?? null);
@@ -53,6 +54,8 @@ export default function DeckBuilder() {
   const [selectedCardLoading, setSelectedCardLoading] = useState(false);
   const [selectedCardError, setSelectedCardError] = useState('');
 
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><SignInPrompt message="Sign in to view and edit this deck." /></div>;
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
   const mainCards = deck.cards.filter((c) => !c.isSideboard);

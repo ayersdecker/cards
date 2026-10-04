@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 export default function CollectionsList() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { collections, loading, createCollection, deleteCollection, updateCollection } =
     useCollections(user?.uid ?? null);
   const {
@@ -22,6 +23,9 @@ export default function CollectionsList() {
   const [renamingKind, setRenamingKind] = useState<'collection' | 'deck'>('collection');
   const [renameVal, setRenameVal] = useState('');
   const [onlyDecks, setOnlyDecks] = useState(false);
+
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><h2 className="page-title">My <span className="accent-cyan">Collections</span></h2><SignInPrompt message="Sign in to view and manage your collections and decks." /></div>;
 
   const portfolioValue = useMemo(() => {
     const collectionValue = collections.reduce((sum, collection) => {

@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections, useDecks } from '../../hooks/useFirestore';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 export default function ProxyHubPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { collections, loading: collectionsLoading, updateCollection } = useCollections(user?.uid ?? null);
   const { decks, loading, updateDeck } = useDecks(user?.uid ?? null);
   const [queueActionLoading, setQueueActionLoading] = useState(false);
@@ -54,6 +55,9 @@ export default function ProxyHubPage() {
   }, [collections, decks]);
 
   const isLoading = loading || collectionsLoading;
+
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><h2 className="page-title">Proxy Print Queue</h2><SignInPrompt message="Sign in to view queued cards and manage proxy print jobs." /></div>;
 
   const clearQueueForSource = async (sourceType: 'deck' | 'collection', sourceId: string) => {
     setQueueActionLoading(true);

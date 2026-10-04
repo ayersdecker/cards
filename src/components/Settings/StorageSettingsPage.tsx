@@ -8,6 +8,7 @@ import {
   type StorageRule,
   type StorageTone,
 } from '../../services/storageSettings';
+import SignInPrompt from '../Auth/SignInPrompt';
 
 const TONED_LABELS: Record<StorageTone, string> = {
   low: 'Magenta',
@@ -406,7 +407,8 @@ export default function StorageSettingsPage() {
         </div>
       </section>
 
-      <section className="settings-form settings-account-card">
+      {user ? (
+        <section className="settings-form settings-account-card">
         <h3>Account</h3>
         <div className="settings-preview-grid">
           <div className="settings-preview-card">
@@ -448,7 +450,10 @@ export default function StorageSettingsPage() {
           {accountMessage && <div className="success-msg">{accountMessage}</div>}
           {accountError && <div className="error-msg">{accountError}</div>}
         </div>
-      </section>
+        </section>
+      ) : (
+        <SignInPrompt message="Sign in to view your account details or manage your account." />
+      )}
     </div>
   );
 }

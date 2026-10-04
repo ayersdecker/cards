@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedReturnTo = (location.state as { from?: string } | null)?.from;
+  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//')
+    ? requestedReturnTo
+    : '/';
   const logoSrc = `${import.meta.env.BASE_URL}logo-hawk.svg`;
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,7 +19,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/');
+      navigate(returnTo, { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign-in failed');
     } finally {

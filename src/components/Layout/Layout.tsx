@@ -1,14 +1,8 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Link, Outlet } from 'react-router-dom';
 import Header from './Header';
 
 export default function Layout() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div className="loading-screen">Loading…</div>;
-  if (!user) return <Navigate to="/login" replace />;
-
   return (
     <div className="app-layout">
       <div className="app-atmosphere" aria-hidden="true">
@@ -41,6 +35,12 @@ export default function Layout() {
             </a>
             .
           </p>
+          <nav className="footer-info-links" aria-label="Site information">
+            <Link to="/about">About</Link>
+            <Link to="/contact">Contact</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </nav>
         </footer>
       </div>
     </div>

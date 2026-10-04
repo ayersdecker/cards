@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import type { ScryfallCard, CollectionCard, DeckCard } from '../../types';
 import { getCardImage, mapColors } from '../../services/scryfall';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +14,7 @@ interface Props {
 
 export default function CardDetail({ card, onClose }: Props) {
   const { user } = useAuth();
+  const location = useLocation();
   const { settings } = useStorageSettings();
   const { collections, updateCollection } = useCollections(user?.uid ?? null);
   const { decks, updateDeck } = useDecks(user?.uid ?? null);
@@ -131,6 +133,18 @@ export default function CardDetail({ card, onClose }: Props) {
               <span>Storage: <strong className={storageClass}>{storageRec}</strong></span>
             </div>
             {feedback && <div className="success-msg">{feedback}</div>}
+            {!user && (
+              <div className="add-to-section">
+                <p className="muted">Sign in to add this card to a collection or deck.</p>
+                <Link
+                  to="/login"
+                  state={{ from: `${location.pathname}${location.search}` }}
+                  className="btn btn-sm btn-primary"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
             {collections.length > 0 && (
               <div className="add-to-section">
                 <h4>Add to Collection</h4>

@@ -394,7 +394,7 @@ export default function HomePage() {
 
   const handleCreateCommanderDeck = async () => {
     if (!user) {
-      setDeckActionError('Sign in to create decks from Commander of the Day.');
+      navigate('/login', { state: { from: '/' } });
       return;
     }
 

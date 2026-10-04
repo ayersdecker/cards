@@ -258,6 +258,77 @@ input[type='checkbox']:focus-visible {
   color: var(--text-primary);
 }
 
+.footer-info-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.45rem;
+}
+
+.info-page {
+  max-width: 900px;
+}
+
+.info-page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-page-kicker {
+  color: var(--accent-cyan);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.info-page-header .page-title {
+  margin: 0.35rem 0 0.7rem;
+}
+
+.info-page-intro {
+  max-width: 46rem;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+}
+
+.info-page-content {
+  display: grid;
+  gap: 1.7rem;
+  max-width: 760px;
+}
+
+.info-page-content section {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.info-page-content h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.18rem;
+}
+
+.info-page-content p,
+.info-page-content li {
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.info-page-content ul {
+  display: grid;
+  gap: 0.55rem;
+  padding-left: 1.25rem;
+}
+
+.info-page-content strong {
+  color: var(--text-primary);
+}
+
+.info-page-action {
+  margin-top: 0.4rem;
+}
+
 /* ===== HEADER ===== */
 .app-header {
   background: rgba(18, 18, 18, 0.9);
