@@ -88,8 +88,23 @@ export interface Deck {
   id: string;
   name: string;
   isCommander?: boolean;
-  commanderCardId?: string;
+  commanderCardId?: string | null;
+  shareId?: string | null;
   createdAt: number;
   updatedAt: number;
   cards: DeckCard[];
+}
+
+export type SharedDeckCard = Pick<DeckCard,
+  'scryfallId' | 'name' | 'quantity' | 'isSideboard' | 'imageUri' | 'type_line' | 'mana_cost' | 'cmc'
+>;
+
+export interface SharedDeck {
+  ownerId: string;
+  deckId: string;
+  name: string;
+  isCommander: boolean;
+  commanderCardId: string | null;
+  updatedAt: number;
+  cards: SharedDeckCard[];
 }

@@ -9,6 +9,8 @@ import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import SignInPrompt from '../Auth/SignInPrompt';
+import DeckExportControls from './DeckExportControls';
+import DeckSharingControls from './DeckSharingControls';
 
 const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
   W: { label: 'White', color: '#f9fafb' },
@@ -22,7 +24,7 @@ export default function DeckBuilder() {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const { settings } = useStorageSettings();
-  const { decks, updateDeck } = useDecks(user?.uid ?? null);
+  const { decks, loading: decksLoading, error: decksError, updateDeck, setDeckSharing } = useDecks(user?.uid ?? null);
   const { collections } = useCollections(user?.uid ?? null);
   const deck = decks.find((d) => d.id === id);
 
@@ -49,6 +51,8 @@ export default function DeckBuilder() {
 
   if (authLoading) return <div className="page"><p>Loading…</p></div>;
   if (!user) return <div className="page"><SignInPrompt message="Sign in to view and edit this deck." /></div>;
+  if (decksLoading) return <div className="page"><p>Loading deck...</p></div>;
+  if (decksError) return <div className="page"><p className="error-msg" role="alert">{decksError}</p></div>;
   if (!deck) return <div className="page"><p>Deck not found.</p></div>;
 
   const mainCards = deck.cards.filter((c) => !c.isSideboard);
@@ -505,7 +509,7 @@ export default function DeckBuilder() {
         <button className="btn btn-ghost" onClick={handleRefreshPrices} disabled={refreshLoading || deck.cards.length === 0}>
           {refreshLoading ? 'Refreshing…' : 'Refresh Prices'}
         </button>
-        <button className="btn btn-primary" onClick={() => void exportDeck(deck, settings)}>Export XLSX</button>
+        <Link className="btn btn-ghost" to="/guides">Deck-building guides</Link>
         <Link className="btn btn-outline" to={`/proxies/deck/${deck.id}`}>Proxy Print ({queuedProxyCount})</Link>
       </div>
       {deck.isCommander && <p className="muted">Commander mode on. Suggested target: 100 cards total and singleton-friendly adds.</p>}
@@ -515,6 +519,8 @@ export default function DeckBuilder() {
       {deckRuleError && <div className="error-msg">{deckRuleError}</div>}
       {refreshMessage && <div className="success-msg">{refreshMessage}</div>}
       {refreshError && <div className="error-msg">{refreshError}</div>}
+      <DeckSharingControls key={deck.id} deck={deck} onToggle={setDeckSharing} />
+      <DeckExportControls deck={deck} onXlsx={() => exportDeck(deck, settings)} />
 
       <div className="deck-layout">
         <div className="deck-main-col">

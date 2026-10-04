@@ -48,7 +48,7 @@ function usePageMetadata(title: string, description: string) {
   }, [title, description, pathname]);
 }
 
-function InfoPage({
+export function InfoPage({
   title,
   description,
   children,
@@ -88,7 +88,9 @@ export function AboutPage() {
         <p>
           Card search and the daily Commander feature are available without an account. A Google account
           is only needed to save collections and decks, view a personal trade binder, or manage a proxy
-          print queue. Saved collections and decks are private to the signed-in account.
+          print queue. Saved collections and decks are private by default. You can optionally enable
+          a read-only deck link that anyone can view without an account, and revoke it at any time.
+          Our <Link to="/guides">deck-building guides</Link> are also free to read.
         </p>
       </section>
 
@@ -137,7 +139,12 @@ export function PrivacyPage() {
           <li>
             <strong>Saved content:</strong> Collections, decks, quantities, and related settings you save
             are stored in Firebase Firestore and associated with your account. Firestore rules restrict
-            access to the owning account.
+            access to the owning account. If you enable deck sharing, a separate read-only decklist
+            is available to anyone with its link and stays updated as you edit. It includes the deck
+            name, cards, quantities, commander, and sideboard, but not your email, collection,
+            ownership check-offs, or proxy queue. Anyone with the link can forward it or export a copy.
+            Turning sharing off or deleting the deck removes the shared list and revokes the link;
+            it cannot remove copies someone has already saved.
           </li>
           <li>
             <strong>Browser storage:</strong> Storage-rule preferences and a small Commander card cache
@@ -187,6 +194,7 @@ export function PrivacyPage() {
         <h2>Retention and your choices</h2>
         <p>
           Saved collections and decks remain associated with your Firebase account until deleted. The
+          Turn off deck sharing before deleting your account to revoke any shared links. The
           current account-deletion control removes the Firebase Authentication account but does not
           automatically delete Firestore collection and deck records. To request removal of saved
           records, contact the maintainer privately using the method on the{' '}

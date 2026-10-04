@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { deleteUser } from 'firebase/auth';
+import { Link } from 'react-router-dom';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -432,6 +433,11 @@ export default function StorageSettingsPage() {
         <div className="settings-account-danger">
           <h4>Danger Zone</h4>
           <p className="muted">Delete your account permanently. This cannot be undone.</p>
+          <p className="muted">
+            Before deleting your account, <Link to="/collections">turn off sharing on your decks</Link>.
+            Account deletion does not delete saved decklists or revoke existing share links, and you
+            will lose the ability to manage them.
+          </p>
           <div className="settings-account-delete-row">
             <input
               placeholder="Type DELETE to confirm"

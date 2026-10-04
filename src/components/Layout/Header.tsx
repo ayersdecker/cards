@@ -25,6 +25,7 @@ export default function Header() {
     { to: '/collections', label: 'Collections' },
     { to: '/proxies', label: 'Proxies' },
     { to: '/trade', label: 'Trade' },
+    { to: '/guides', label: 'Guides' },
   ];
 
   const isActive = (to: string) => {

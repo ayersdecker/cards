@@ -9,30 +9,9 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { updateStoredDeck, setStoredDeckSharing, deleteStoredDeck } from '../services/deckSharing';
+import { sanitizeFirestoreValue } from '../services/firestoreValues';
 import type { Collection, Deck } from '../types';
-
-function sanitizeFirestoreValue(value: unknown): unknown {
-  if (value === undefined) return undefined;
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => sanitizeFirestoreValue(item))
-      .filter((item) => item !== undefined);
-  }
-
-  if (value && typeof value === 'object') {
-    const next: Record<string, unknown> = {};
-    for (const [key, entryValue] of Object.entries(value as Record<string, unknown>)) {
-      const sanitized = sanitizeFirestoreValue(entryValue);
-      if (sanitized !== undefined) {
-        next[key] = sanitized;
-      }
-    }
-    return next;
-  }
-
-  return value;
-}
 
 export function useCollections(uid: string | null) {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -74,13 +53,20 @@ export function useCollections(uid: string | null) {
 export function useDecks(uid: string | null) {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!uid || !db) { setDecks([]); setLoading(false); return; }
+    setLoading(true);
+    setError('');
+    setDecks([]);
     const colRef = collection(db, 'users', uid, 'decks');
     const unsub = onSnapshot(query(colRef), (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Deck));
       setDecks(data);
+      setLoading(false);
+    }, (err) => {
+      setError(`Unable to load decks: ${err.message}`);
       setLoading(false);
     });
     return unsub;
@@ -101,16 +87,16 @@ export function useDecks(uid: string | null) {
   };
 
   const updateDeck = async (deckId: string, data: Partial<Deck>) => {
-    if (!uid || !db) return;
-    const ref = doc(db, 'users', uid, 'decks', deckId);
-    const sanitized = sanitizeFirestoreValue({ ...data, updatedAt: Date.now() }) as Record<string, unknown>;
-    await updateDoc(ref, sanitized);
+    await updateStoredDeck(db, uid, deckId, data);
+  };
+
+  const setDeckSharing = async (deckId: string, enabled: boolean) => {
+    return setStoredDeckSharing(db, uid, deckId, enabled);
   };
 
   const deleteDeck = async (deckId: string) => {
-    if (!uid || !db) return;
-    await deleteDoc(doc(db, 'users', uid, 'decks', deckId));
+    await deleteStoredDeck(db, uid, deckId);
   };
 
-  return { decks, loading, createDeck, updateDeck, deleteDeck };
+  return { decks, loading, error, createDeck, updateDeck, deleteDeck, setDeckSharing };
 }

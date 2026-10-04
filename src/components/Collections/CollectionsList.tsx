@@ -11,6 +11,7 @@ export default function CollectionsList() {
   const {
     decks,
     loading: decksLoading,
+    error: decksError,
     createDeck,
     deleteDeck,
     updateDeck,
@@ -23,9 +24,7 @@ export default function CollectionsList() {
   const [renamingKind, setRenamingKind] = useState<'collection' | 'deck'>('collection');
   const [renameVal, setRenameVal] = useState('');
   const [onlyDecks, setOnlyDecks] = useState(false);
-
-  if (authLoading) return <div className="page"><p>Loading…</p></div>;
-  if (!user) return <div className="page"><h2 className="page-title">My <span className="accent-cyan">Collections</span></h2><SignInPrompt message="Sign in to view and manage your collections and decks." /></div>;
+  const [mutationError, setMutationError] = useState('');
 
   const portfolioValue = useMemo(() => {
     const collectionValue = collections.reduce((sum, collection) => {
@@ -44,6 +43,9 @@ export default function CollectionsList() {
     const deckCards = decks.reduce((sum, deck) => sum + deck.cards.reduce((inner, card) => inner + card.quantity, 0), 0);
     return collectionCards + deckCards;
   }, [collections, decks]);
+
+  if (authLoading) return <div className="page"><p>Loading…</p></div>;
+  if (!user) return <div className="page"><h2 className="page-title">My <span className="accent-cyan">Collections</span></h2><SignInPrompt message="Sign in to view and manage your collections and decks." /></div>;
 
   const resetCreateSetup = () => {
     setShowCreateSetup(false);
@@ -69,14 +71,27 @@ export default function CollectionsList() {
 
   const handleRename = async (id: string, kind: 'collection' | 'deck') => {
     if (!renameVal.trim()) return;
-
-    if (kind === 'deck') {
-      await updateDeck(id, { name: renameVal.trim() });
-    } else {
-      await updateCollection(id, { name: renameVal.trim() });
+    setMutationError('');
+    try {
+      if (kind === 'deck') {
+        await updateDeck(id, { name: renameVal.trim() });
+      } else {
+        await updateCollection(id, { name: renameVal.trim() });
+      }
+      setRenaming(null);
+    } catch (err) {
+      setMutationError(`Unable to rename: ${err instanceof Error ? err.message : 'Please try again.'}`);
     }
+  };
 
-    setRenaming(null);
+  const handleDelete = async (id: string, kind: 'collection' | 'deck') => {
+    setMutationError('');
+    try {
+      if (kind === 'deck') await deleteDeck(id);
+      else await deleteCollection(id);
+    } catch (err) {
+      setMutationError(`Unable to delete: ${err instanceof Error ? err.message : 'Please try again.'}`);
+    }
   };
 
   const items = [
@@ -115,6 +130,7 @@ export default function CollectionsList() {
   return (
     <div className="page">
       <h2 className="page-title">My <span className="accent-cyan">Collections</span></h2>
+      {(decksError || mutationError) && <p className="error-msg" role="alert">{decksError || mutationError}</p>}
       <section className="portfolio-panel card-surface">
         <div className="portfolio-row">
           <div>
@@ -222,13 +238,7 @@ export default function CollectionsList() {
                   </button>
                   <button
                     className="btn btn-sm btn-danger"
-                    onClick={() => {
-                      if (item.kind === 'deck') {
-                        void deleteDeck(item.id);
-                        return;
-                      }
-                      void deleteCollection(item.id);
-                    }}
+                    onClick={() => void handleDelete(item.id, item.kind)}
                   >
                     Delete
                   </button>

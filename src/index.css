@@ -47,6 +47,25 @@ body {
 a { color: var(--accent-cyan); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+.deck-tools-panel {
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.deck-tools-panel > * + * { margin-top: 0.75rem; }
+.deck-tool-actions { align-items: end; }
+.deck-export-format { display: grid; gap: 0.35rem; min-width: 160px; }
+.deck-tools-panel label { display: grid; gap: 0.35rem; }
+.deck-export-preview summary { cursor: pointer; color: var(--accent-cyan); }
+.deck-export-preview textarea { margin-top: 0.75rem; font-family: monospace; resize: vertical; }
+.shared-deck-section { margin: 1.5rem 0; }
+.shared-deck-section h2 { margin-bottom: 0.75rem; }
+.guides-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1rem; }
+.guide-card { padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+.guide-card > * + * { margin-top: 1rem; }
+
 /* ===== ACCENT CLASSES ===== */
 .accent-cyan { color: var(--accent-cyan); }
 .accent-magenta { color: var(--accent-magenta); }
@@ -344,7 +363,8 @@ input[type='checkbox']:focus-visible {
   line-height: 1.8;
 }
 
-.info-page-content ul {
+.info-page-content ul,
+.info-page-content ol {
   display: grid;
   gap: 0.55rem;
   padding-left: 1.25rem;

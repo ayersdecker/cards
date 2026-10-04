@@ -9,6 +9,8 @@ import CardSearch from './components/Cards/CardSearch';
 import CollectionsList from './components/Collections/CollectionsList';
 import CollectionDetail from './components/Collections/CollectionDetail';
 import DeckBuilder from './components/Decks/DeckBuilder';
+import SharedDeckPage from './components/Decks/SharedDeckPage';
+import GuidesPage, { GuidePage } from './components/Guides/GuidesPage';
 import TradeBinderPage from './components/Trade/TradeBinderPage';
 import StorageSettingsPage from './components/Settings/StorageSettingsPage';
 import ProxyHubPage from './components/Proxy/ProxyHubPage';
@@ -38,6 +40,9 @@ export default function App() {
               <Route path="/proxies/:sourceType/:id" element={<ProxyPrintPage />} />
               <Route path="/proxies/deck/:id" element={<ProxyPrintPage />} />
               <Route path="/collections/deck/:id" element={<DeckBuilder />} />
+              <Route path="/shared/decks/:shareId" element={<SharedDeckPage />} />
+              <Route path="/guides" element={<GuidesPage />} />
+              <Route path="/guides/:slug" element={<GuidePage />} />
               <Route path="/collections/:id" element={<CollectionDetail />} />
               <Route path="/decks" element={<Navigate to="/collections" replace />} />
               <Route path="/decks/:id" element={<Navigate to="/collections" replace />} />

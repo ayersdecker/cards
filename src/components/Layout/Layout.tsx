@@ -44,6 +44,7 @@ export default function Layout() {
             </p>
             <nav className="footer-info-links" aria-label="Site information">
               <Link to="/about">About</Link>
+              <Link to="/guides">Guides</Link>
               <Link to="/contact">Contact</Link>
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>

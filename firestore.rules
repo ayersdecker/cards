@@ -5,6 +5,26 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    match /sharedDecks/{shareId} {
+      function isValidPublication() {
+        return isOwner(request.resource.data.ownerId)
+          && request.resource.data.keys().hasOnly([
+            'ownerId', 'deckId', 'name', 'isCommander', 'commanderCardId', 'updatedAt', 'cards'
+          ])
+          && request.resource.data.name is string
+          && request.resource.data.cards is list
+          && request.resource.data.updatedAt is number
+          && request.resource.data.isCommander is bool
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/decks/$(request.resource.data.deckId)).data.shareId == shareId;
+      }
+
+      allow get: if true;
+      allow list: if false;
+      allow create: if isValidPublication();
+      allow update: if isValidPublication() && isOwner(resource.data.ownerId);
+      allow delete: if isOwner(resource.data.ownerId);
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }

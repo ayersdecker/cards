@@ -2,3 +2,5 @@ node_modules/
 dist/
 .env
 .env.local
+firestore-debug.log
+firebase-debug.log
