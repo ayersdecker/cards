@@ -2312,41 +2312,6 @@ input[type='checkbox']:focus-visible {
   padding: 0.08rem 0.45rem;
 }
 
-.ai-actions-row {
-  margin-bottom: 0.75rem;
-}
-
-.ai-chat-input-row {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.ai-chat-input-row input {
-  flex: 1;
-}
-
-.ai-reply {
-  margin-bottom: 0.75rem;
-}
-
-.ai-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.ai-suggestion-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.6rem;
-}
-
 .proxy-sidebar-head {
   display: flex;
   align-items: center;
@@ -2628,41 +2593,6 @@ input[type='checkbox']:focus-visible {
 }
 .hotswap-option:hover { border-color: var(--accent-magenta); transform: translateY(-2px); }
 .hotswap-option img { width: 100%; border-radius: 5px; margin-bottom: 0.35rem; }
-
-/* ===== CARD RECOGNITION ===== */
-.recognition-area {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.drop-zone {
-  width: 300px;
-  height: 220px;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
-  overflow: hidden;
-}
-.drop-zone:hover { border-color: var(--accent-cyan); background: rgba(255, 51, 68, 0.08); }
-.drop-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-.drop-placeholder span:first-child { font-size: 2rem; }
-.upload-preview { width: 100%; height: 100%; object-fit: contain; }
-
-.recognized-result { margin-top: 1rem; }
-.recognized-card { max-width: 200px; }
 
 @media (max-width: 768px) {
   .app-main {
@@ -3238,26 +3168,12 @@ input[type='checkbox']:focus-visible {
     align-items: stretch;
   }
 
-  .ai-chat-input-row {
-    flex-direction: column;
-  }
-
   .deck-format-toggle {
     width: 100%;
   }
 
   .deck-format-btn {
     flex: 1;
-  }
-
-  .ai-suggestion-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ai-suggestion-row .btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .deck-search-row div {
@@ -3299,16 +3215,6 @@ input[type='checkbox']:focus-visible {
   .proxy-print-mode-btn {
     width: 100%;
     text-align: center;
-  }
-
-  .drop-zone {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .recognized-card {
-    max-width: none;
-    width: 100%;
   }
 }
 

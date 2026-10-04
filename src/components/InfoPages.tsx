@@ -154,16 +154,13 @@ export function PrivacyPage() {
         <h2>Third-party services</h2>
         <p>
           The service uses Google Firebase for sign-in, database storage, and analytics. Card searches
-          and card data requests are sent to Scryfall. If you choose card recognition or deck-assistant
-          features, the selected card image, deck details, and/or prompt are sent to OpenAI to provide
-          that feature. Do not include sensitive personal information in images or prompts. Those
-          providers process information under their own terms and privacy policies:
+          and card data requests are sent to Scryfall. These providers process information under their
+          own terms and privacy policies:
         </p>
         <ul>
           <li><a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google Privacy Policy</a></li>
           <li><a href="https://firebase.google.com/support/privacy" target="_blank" rel="noreferrer">Firebase Privacy and Security</a></li>
           <li><a href="https://scryfall.com/docs/privacy" target="_blank" rel="noreferrer">Scryfall Privacy Policy</a></li>
-          <li><a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noreferrer">OpenAI Privacy Policy</a></li>
         </ul>
       </section>
 
@@ -259,7 +256,7 @@ export function TermsPage() {
       <section>
         <h2>Third-party services and availability</h2>
         <p>
-          The app depends on services including Google Firebase, Scryfall, and optional OpenAI features.
+          The app depends on services including Google Firebase and Scryfall.
           Their services are governed by their own terms. Redtail Cards is provided on an as-available
           basis; features, data, or access may change, and saved data should not be treated as your only
           backup.

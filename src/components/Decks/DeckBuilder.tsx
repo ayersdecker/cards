@@ -8,7 +8,6 @@ import { resolveBulkCardList } from '../../services/bulkImport';
 import { exportDeck } from '../../services/excel';
 import type { ScryfallCard, DeckCard } from '../../types';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
-import { chatWithDeckAssistant, optimizeDeck, type DeckAISuggestion } from '../../services/openai';
 import SignInPrompt from '../Auth/SignInPrompt';
 
 const COLOR_DISPLAY: Record<string, { label: string; color: string }> = {
@@ -43,12 +42,6 @@ export default function DeckBuilder() {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
   const [refreshError, setRefreshError] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiReply, setAiReply] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState<DeckAISuggestion[]>([]);
-  const [aiError, setAiError] = useState('');
-  const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
   const [deckRuleError, setDeckRuleError] = useState('');
   const [selectedCard, setSelectedCard] = useState<ScryfallCard | null>(null);
   const [selectedCardLoading, setSelectedCardLoading] = useState(false);
@@ -466,76 +459,6 @@ export default function DeckBuilder() {
     setDeckRuleError('');
   };
 
-  const deckForAI = {
-    name: deck.name,
-    isCommander: deck.isCommander,
-    cards: deck.cards.map((card) => ({
-      name: card.name,
-      quantity: card.quantity,
-      isSideboard: card.isSideboard,
-      type_line: card.type_line,
-      mana_cost: card.mana_cost,
-      cmc: card.cmc,
-      colors: card.colors,
-    })),
-  };
-
-  const runOptimize = async () => {
-    setAiLoading(true);
-    setAiError('');
-    try {
-      const result = await optimizeDeck(deckForAI);
-      setAiReply(result.reply);
-      setAiSuggestions(result.suggestions);
-    } catch (error: unknown) {
-      setAiError(error instanceof Error ? error.message : 'AI optimization failed');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const runChat = async () => {
-    if (!aiPrompt.trim()) return;
-    setAiLoading(true);
-    setAiError('');
-    try {
-      const result = await chatWithDeckAssistant(deckForAI, aiPrompt.trim());
-      setAiReply(result.reply);
-      setAiSuggestions(result.suggestions);
-      setAiPrompt('');
-    } catch (error: unknown) {
-      setAiError(error instanceof Error ? error.message : 'AI chat failed');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const quickAddSuggestion = async (suggestion: DeckAISuggestion, index: number) => {
-    const key = `${suggestion.name}-${index}`;
-    setAddingSuggestion(key);
-    setAiError('');
-    try {
-      const preferredSet = settings.preferredSetCode?.trim().toLowerCase();
-      const resolved =
-        (preferredSet ? await getCardByExactName(suggestion.name, preferredSet) : null) ??
-        (await getCardByExactName(suggestion.name)) ??
-        (await getCardByName(suggestion.name));
-
-      if (!resolved) {
-        setAiError(`Could not find "${suggestion.name}" on Scryfall.`);
-        return;
-      }
-
-      const targetSide = suggestion.section === 'side';
-      const quantity = Math.max(1, Math.min(suggestion.quantity ?? 1, deck.isCommander ? 1 : 4));
-      await addCard(resolved, targetSide, quantity);
-    } catch (error: unknown) {
-      setAiError(error instanceof Error ? error.message : 'Failed to add suggested card');
-    } finally {
-      setAddingSuggestion(null);
-    }
-  };
-
   // Mana curve: group main cards by cmc
   const curveBuckets: Record<number, number> = {};
   for (const c of mainCards) {
@@ -775,49 +698,6 @@ export default function DeckBuilder() {
                 <p className="muted">No cards queued yet. Queue missing cards from the deck list.</p>
               )}
             </div>
-          </div>
-
-          <div className="stats-card">
-            <h4>AI Deck Assistant</h4>
-            <div className="ai-actions-row">
-              <button className="btn btn-primary" onClick={runOptimize} disabled={aiLoading}>
-                {aiLoading ? 'Thinking…' : deck.isCommander ? 'Optimize Commander' : 'Optimize Deck'}
-              </button>
-            </div>
-            <div className="ai-chat-input-row">
-              <input
-                placeholder="Ask AI (e.g. add more ramp, fix curve, suggest removal)"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-              />
-              <button className="btn btn-outline" onClick={runChat} disabled={aiLoading || !aiPrompt.trim()}>
-                Send
-              </button>
-            </div>
-            {aiError && <div className="error-msg">{aiError}</div>}
-            {aiReply && <p className="muted ai-reply">{aiReply}</p>}
-            {aiSuggestions.length > 0 && (
-              <div className="ai-suggestions">
-                {aiSuggestions.map((suggestion, index) => {
-                  const suggestionKey = `${suggestion.name}-${index}`;
-                  return (
-                    <div key={suggestionKey} className="ai-suggestion-row">
-                      <div>
-                        <strong>{suggestion.name}</strong>
-                        <div className="muted">{suggestion.reason}</div>
-                      </div>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => void quickAddSuggestion(suggestion, index)}
-                        disabled={addingSuggestion === suggestionKey}
-                      >
-                        {addingSuggestion === suggestionKey ? 'Adding…' : `Quick Add ${suggestion.quantity ?? 1}`}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           <div className="stats-card">

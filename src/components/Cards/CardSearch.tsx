@@ -4,7 +4,6 @@ import { searchCards } from '../../services/scryfall';
 import { resolveBulkCardList, type ResolvedListEntry } from '../../services/bulkImport';
 import type { CollectionCard, ScryfallCard } from '../../types';
 import CardGrid from './CardGrid';
-import CardRecognition from '../CardRecognition/CardRecognition';
 import { useStorageSettings } from '../../context/StorageSettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCollections } from '../../hooks/useFirestore';
@@ -329,7 +328,6 @@ export default function CardSearch() {
         )}
       </section>
       {bulkMessage && <div className="success-msg">{bulkMessage}</div>}
-      <CardRecognition embedded />
     </div>
   );
 }
