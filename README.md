@@ -47,6 +47,11 @@ The `/guides` index and three individual guide pages are public and included in 
 
 ## Validation
 
+CI uses Node 20 and its bundled npm 10. Use Node 20.19+ and npm 10 when updating
+dependencies or regenerating `package-lock.json`, then verify with `npm ci` before
+running tests and the build. Different npm major versions can resolve optional
+peer dependencies differently.
+
 - `npm test`: text export, privacy projection, guide rendering, and export-control tests.
 - `npm run build`: TypeScript checking and production build.
 - `npx firebase-tools@14 emulators:exec --project demo-cards --only firestore "npm run test:rules"`:
