@@ -163,14 +163,138 @@ function normalizeCommanderGuess(value: string): string {
 }
 
 function findCommanderByGuess(commanders: ScryfallCard[], guess: string): ScryfallCard | null {
+  return getCommanderGuessMatches(commanders, guess)[0] ?? null;
+}
+
+function getEditDistance(left: string, right: string): number {
+  let previousRow = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const currentRow = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      currentRow[rightIndex] = Math.min(
+        previousRow[rightIndex] + 1,
+        currentRow[rightIndex - 1] + 1,
+        previousRow[rightIndex - 1] + substitutionCost
+      );
+    }
+    previousRow = currentRow;
+  }
+
+  return previousRow[right.length];
+}
+
+function getCommanderGuessScore(name: string, guess: string): number | null {
+  const normalizedName = normalizeCommanderGuess(name);
   const normalizedGuess = normalizeCommanderGuess(guess);
-  if (!normalizedGuess) return null;
+  if (normalizedGuess.length < 3) return null;
+  if (normalizedName === normalizedGuess) return 0;
+  if (normalizedName.includes(normalizedGuess)) {
+    return 0.1 + (normalizedName.length - normalizedGuess.length) / normalizedName.length;
+  }
 
-  const direct = commanders.find(
-    (commander) => normalizeCommanderGuess(commander.name) === normalizedGuess
-  );
+  const guessTokens = normalizedGuess.split(' ');
+  const nameTokens = normalizedName.split(' ');
+  let totalScore = 0;
 
-  return direct ?? null;
+  for (const guessToken of guessTokens) {
+    if (guessToken.length < 3) return null;
+
+    let bestTokenScore = Number.POSITIVE_INFINITY;
+    for (const nameToken of nameTokens) {
+      if (nameToken.includes(guessToken)) {
+        bestTokenScore = Math.min(bestTokenScore, 0.1 + (nameToken.length - guessToken.length) / nameToken.length);
+        continue;
+      }
+
+      const distance = getEditDistance(guessToken, nameToken);
+      const allowedDistance = Math.max(1, Math.floor(guessToken.length * 0.2));
+      if (distance <= allowedDistance) {
+        bestTokenScore = Math.min(bestTokenScore, 0.4 + distance / guessToken.length);
+      }
+    }
+
+    if (!Number.isFinite(bestTokenScore)) return null;
+    totalScore += bestTokenScore;
+  }
+
+  return totalScore / guessTokens.length + Math.abs(nameTokens.length - guessTokens.length) * 0.02;
+}
+
+function getCommanderGuessMatches(commanders: ScryfallCard[], guess: string): ScryfallCard[] {
+  const normalizedGuess = normalizeCommanderGuess(guess);
+  if (normalizedGuess.length < 3) return [];
+
+  return commanders
+    .map((commander, index) => ({
+      commander,
+      index,
+      score: getCommanderGuessScore(commander.name, normalizedGuess),
+    }))
+    .filter((match) => match.score !== null)
+    .sort((left, right) => left.score! - right.score! || left.index - right.index)
+    .slice(0, 6)
+    .map((match) => match.commander);
+}
+
+type ReleaseCardCategory = 'creature' | 'spell' | 'artifact' | 'planeswalker' | 'land' | 'other';
+
+const RELEASE_CARD_CATEGORIES: ReleaseCardCategory[] = [
+  'creature',
+  'spell',
+  'artifact',
+  'planeswalker',
+  'land',
+  'other',
+];
+
+function getReleaseCardCategory(card: ScryfallCard): ReleaseCardCategory {
+  const typeLine = card.type_line.toLowerCase();
+  if (typeLine.includes('planeswalker')) return 'planeswalker';
+  if (typeLine.includes('creature')) return 'creature';
+  if (typeLine.includes('instant') || typeLine.includes('sorcery')) return 'spell';
+  if (typeLine.includes('artifact') || typeLine.includes('enchantment')) return 'artifact';
+  if (typeLine.includes('land')) return 'land';
+  return 'other';
+}
+
+function selectReleaseCards(cards: ScryfallCard[], rotation: number): ScryfallCard[] {
+  const buckets: Record<ReleaseCardCategory, ScryfallCard[]> = {
+    creature: [],
+    spell: [],
+    artifact: [],
+    planeswalker: [],
+    land: [],
+    other: [],
+  };
+
+  for (const card of cards) {
+    if (!card.image_uris?.normal && !card.card_faces?.[0]?.image_uris?.normal) continue;
+    buckets[getReleaseCardCategory(card)].push(card);
+  }
+
+  const categories = RELEASE_CARD_CATEGORIES.filter((category) => buckets[category].length > 0);
+  if (categories.length === 0) return [];
+
+  const firstCategory = rotation % categories.length;
+  const selected: ScryfallCard[] = [];
+  const categoryIndexes = Object.fromEntries(categories.map((category) => [category, 0])) as Record<ReleaseCardCategory, number>;
+
+  while (selected.length < 5) {
+    let addedThisRound = false;
+    for (let offset = 0; offset < categories.length && selected.length < 5; offset += 1) {
+      const category = categories[(firstCategory + offset) % categories.length];
+      const card = buckets[category][categoryIndexes[category]];
+      if (!card) continue;
+      selected.push(card);
+      categoryIndexes[category] += 1;
+      addedThisRound = true;
+    }
+    if (!addedThisRound) break;
+  }
+
+  return selected;
 }
 
 export default function HomePage() {
@@ -252,16 +376,14 @@ export default function HomePage() {
 
       try {
         const pairs = await Promise.all(
-          RELEASE_SPOTLIGHTS.map(async (release) => {
+          RELEASE_SPOTLIGHTS.map(async (release, releaseIndex) => {
             const response = await searchCards(release.searchQuery, 1, {
               unique: 'cards',
               order: 'edhrec',
               dir: 'desc',
             });
 
-            const cards = (response.data ?? [])
-              .filter((card) => Boolean(card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal))
-              .slice(0, 5);
+            const cards = selectReleaseCards(response.data ?? [], releaseIndex);
 
             return [release.id, cards] as const;
           })
@@ -347,10 +469,8 @@ export default function HomePage() {
     }
 
     const normalizedInput = normalizeCommanderGuess(trimmedInput);
-    const localSuggestions = topCommanders
-      .map((commander) => commander.name)
-      .filter((name) => normalizeCommanderGuess(name).includes(normalizedInput))
-      .slice(0, 6);
+    const localSuggestions = getCommanderGuessMatches(topCommanders, normalizedInput)
+      .map((commander) => commander.name);
 
     if (localSuggestions.length >= 3) {
       setGuessSuggestions(localSuggestions);
@@ -735,7 +855,7 @@ export default function HomePage() {
                   <input
                     value={guessInput}
                     onChange={(event) => setGuessInput(event.target.value)}
-                    placeholder="Type a commander name"
+                    placeholder="Try part of a name, e.g. Atraxa"
                     list="commander-guess-suggestions"
                     autoComplete="off"
                   />
@@ -780,7 +900,7 @@ export default function HomePage() {
                 </div>
 
                 {guessFeedback && <p className={guessFeedbackTone === 'success' ? 'success-msg' : 'muted'}>{guessFeedback}</p>}
-                <p className="muted">Hints help narrow the field without revealing the name directly.</p>
+                <p className="muted">Partial names and close spellings work too.</p>
               </div>
             </aside>
           </div>

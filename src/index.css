@@ -619,6 +619,19 @@ input[type='checkbox']:focus-visible {
   border-radius: var(--radius-lg);
 }
 
+.sign-in-prompt {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  max-width: 42rem;
+  padding: 1.5rem;
+}
+
+.sign-in-prompt h3,
+.sign-in-prompt p {
+  margin: 0;
+}
+
 /* ===== HOME ===== */
 .home-page {
   display: flex;
