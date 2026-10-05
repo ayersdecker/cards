@@ -22,6 +22,9 @@ describe('public guides', () => {
     expect(html).toContain('/guides/commander-foundations');
     expect(html).toContain('/guides/sixty-card-consistency');
     expect(html).toContain('/guides/budget-and-playtesting');
+    expect(html.match(/class="guide-card-art"/g)).toHaveLength(3);
+    expect(html).toContain('THE REDTAIL FIELD GUIDE');
+    expect(html).toContain('A good idea deserves a first draft.');
   });
 
   it.each([
@@ -31,9 +34,12 @@ describe('public guides', () => {
   ])('renders the full %s guide with actionable content', (slug, heading) => {
     const html = renderGuide(`/guides/${slug}`);
     expect(html).toContain(heading);
-    expect(html.match(/<section>/g)?.length).toBeGreaterThanOrEqual(6);
+    expect(html.match(/<section(?:\s|>)/g)?.length).toBeGreaterThanOrEqual(6);
     expect(html).toContain('href="/collections"');
     expect(html).toContain('Back to all guides');
+    expect(html.match(/class="guide-figure"/g)).toHaveLength(3);
+    expect(html).toContain('aria-label="In this guide"');
+    expect(html).toContain('YOUR READING PATH');
   });
 
   it('provides a helpful unavailable-guide page', () => {

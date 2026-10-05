@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" fill="none">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#142020"/><stop offset=".48" stop-color="#15171a"/><stop offset="1" stop-color="#261416"/></linearGradient></defs>
+  <path fill="url(#bg)" d="M0 0h1200v660H0z"/><g stroke="#b1c7bd" stroke-opacity=".17"><path d="M105 500h980M105 370h980M105 240h980M105 110h980"/><path d="M105 110v390M350 110v390M595 110v390M840 110v390M1085 110v390"/></g>
+  <path d="M143 443c152-31 206-149 357-140s203 111 339 72 160-144 246-164" stroke="#ff7868" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 17"/>
+  <path d="M143 443c152-31 206-149 357-140s203 111 339 72 160-144 246-164" stroke="#ff7868" stroke-opacity=".2" stroke-width="25"/>
+  <g fill="#202a29" stroke="#9bc8b6" stroke-width="3"><circle cx="143" cy="443" r="39"/><circle cx="500" cy="303" r="39"/><circle cx="839" cy="375" r="39"/><circle cx="1085" cy="139" r="39"/></g>
+  <g fill="#f1e9df" font-family="Arial,sans-serif" font-size="20" font-weight="700" text-anchor="middle"><text x="143" y="451">LAND</text><text x="500" y="311">TURN 2</text><text x="839" y="383">ENGINE</text><text x="1085" y="147">FINISH</text></g>
+  <g fill="#ffb295"><circle cx="178" cy="206" r="15"/><circle cx="229" cy="174" r="10"/><circle cx="1017" cy="484" r="14"/><circle cx="1072" cy="526" r="8"/></g>
+  <g fill="#c5c2b9" font-family="Arial,sans-serif" font-size="16"><text x="115" y="557">untapped color sources</text><text x="433" y="404">reliable early colors</text><text x="773" y="463">room to develop</text><text x="955" y="210">cast the spell on time</text></g>
+</svg>

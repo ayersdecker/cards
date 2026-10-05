@@ -52,15 +52,17 @@ export function InfoPage({
   title,
   description,
   children,
+  className = '',
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  className?: string;
 }) {
   usePageMetadata(title, description);
 
   return (
-    <article className="page info-page">
+    <article className={`page info-page ${className}`}>
       <header className="info-page-header">
         <p className="info-page-kicker">REDTAIL CARDS</p>
         <h1 className="page-title">{title}</h1>
@@ -174,9 +176,9 @@ export function PrivacyPage() {
       <section>
         <h2>Advertising and cookies</h2>
         <p>
-          Redtail Cards does not currently display Google AdSense advertisements. If advertising is
-          enabled, Google and its partners may use cookies or similar technologies to deliver, measure,
-          and personalize ads based on visits to this and other sites. You can learn about Google's
+          Redtail Cards displays Google AdSense advertisements in the desktop sidebars. Google and its
+          partners may use cookies or similar technologies to deliver, measure, and personalize ads
+          based on visits to this and other sites. You can learn about Google's
           advertising technology and controls in its{' '}
           <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer">
             advertising policies

@@ -21,11 +21,11 @@ export default function Header() {
 
   const navLinks = [
     { to: '/', label: 'Home' },
+    { to: '/guides', label: 'Guides' },
     { to: '/search', label: 'Search' },
     { to: '/collections', label: 'Collections' },
     { to: '/proxies', label: 'Proxies' },
     { to: '/trade', label: 'Trade' },
-    { to: '/guides', label: 'Guides' },
   ];
 
   const isActive = (to: string) => {

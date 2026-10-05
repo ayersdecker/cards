@@ -1,15 +1,16 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import Header from './Header';
+import AdUnit from './AdUnit';
 
 export default function Layout() {
   return (
     <>
       <aside className="ad-rail ad-rail-left" aria-label="Left advertisement space">
-        <div className="ad-rail-slot" />
+        <AdUnit />
       </aside>
       <aside className="ad-rail ad-rail-right" aria-label="Right advertisement space">
-        <div className="ad-rail-slot" />
+        <AdUnit />
       </aside>
       <div className="app-layout">
         <div className="app-atmosphere" aria-hidden="true">
